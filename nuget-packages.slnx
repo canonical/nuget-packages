@@ -17,6 +17,7 @@ program.  If not, see http://www.gnu.org/licenses/.
 <Solution>
   <Folder Name="/Dpkg/">
     <Project Path="src/Dpkg.Abstractions/Dpkg.Abstractions.csproj" />
+    <Project Path="tests/Dpkg.Abstractions.UnitTests/Dpkg.Abstractions.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Madison/">
     <Project Path="src/Madison/Madison.csproj" />
