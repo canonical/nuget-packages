@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Madison/">
+    <Project Path="src/Madison/Madison.csproj" />
+    <Project Path="tests/Madison.UnitTests/Madison.UnitTests.csproj" />
+  </Folder>
+</Solution>
