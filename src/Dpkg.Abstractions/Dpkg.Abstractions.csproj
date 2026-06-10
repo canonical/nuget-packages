@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 Copyright (C) 2026 Canonical Ltd.
 
 SPDX-License-Identifier: GPL-3.0-only
@@ -14,12 +14,11 @@ for more details.
 You should have received a copy of the GNU General Public License along with this
 program.  If not, see http://www.gnu.org/licenses/.
 -->
-<Solution>
-  <Folder Name="/Dpkg/">
-    <Project Path="src/Dpkg.Abstractions/Dpkg.Abstractions.csproj" />
-  </Folder>
-  <Folder Name="/Madison/">
-    <Project Path="src/Madison/Madison.csproj" />
-    <Project Path="tests/Madison.UnitTests/Madison.UnitTests.csproj" />
-  </Folder>
-</Solution>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Canonical.Dpkg.Abstractions</AssemblyName>
+    <RootNamespace>Canonical.Dpkg</RootNamespace>
+  </PropertyGroup>
+
+</Project>
