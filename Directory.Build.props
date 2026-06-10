@@ -14,9 +14,19 @@ for more details.
 You should have received a copy of the GNU General Public License along with this
 program.  If not, see http://www.gnu.org/licenses/.
 -->
-<Solution>
-  <Folder Name="/Madison/">
-    <Project Path="src/Madison/Madison.csproj" />
-    <Project Path="tests/Madison.UnitTests/Madison.UnitTests.csproj" />
-  </Folder>
-</Solution>
+<Project>
+  <PropertyGroup>
+    <Authors>Dominik Viererbe &lt;dominik.viererbe@canonical.com&gt;</Authors>
+    <Company>Canonical Ltd.</Company>
+    <Copyright>Copyright 2026 Canonical Ltd.</Copyright>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+
+    <PackageProjectUrl>https://github.com/canonical/nuget-packages</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/canonical/nuget-packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>
