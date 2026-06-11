@@ -25,34 +25,28 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     public override string ToString() => Identifier;
 
     public static implicit operator string(DpkgName dpkgName) => dpkgName.Identifier;
-    public static explicit operator DpkgName(string value) => Parse(value, throwOnError: true)!.Value;
-    public static explicit operator DpkgName(Span<char> value) => Parse(value, throwOnError: true)!.Value;
+    public static explicit operator DpkgName(string value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+    public static explicit operator DpkgName(Span<char> value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
 
     /// <summary>
     /// Parses a string representation of a debian package name and performs validation.
     /// </summary>
     /// <param name="value">The string representation of the debian package name.</param>
-    /// <param name="throwOnError"><see langword="true"/> if the method should throw if <paramref name="value"/> is invalid; otherwise return <see langword="null"/>.</param>
-    /// <param name="throwOnFirstError"><see langword="true"/> if the method should throw if <paramref name="value"/> is invalid; otherwise return <see langword="null"/>.</param>
+    /// <param name="errorHandling">How the parser should deal with invalid version strings.</param>
     /// <returns>The parsed and validated dpkg name.</returns>
-    /// <exception cref="ArgumentException">When <paramref name="throwOnError"/> is <see langword="false"/>, but <paramref name="throwOnFirstError"/> is <see langword="true"/>.</exception>
     /// <exception cref="MalformedDpkgNameException">When <paramref name="value"/> is not a valid dpkg name.</exception>
-    public static DpkgName? Parse(ReadOnlySpan<char> value, bool throwOnError, bool throwOnFirstError = false)
+    public static DpkgName? Parse(ReadOnlySpan<char> value, DpkgParsingErrorHandling errorHandling)
     {
         var invalidCharacters = ImmutableList<(char invalidCharacter, int position)>.Empty;
-        if (throwOnFirstError && !throwOnError)
-        {
-            throw new ArgumentException("Parameter throwOnError can not be false when parameter throwOnFirstError is true.", nameof(throwOnFirstError));
-        }
 
         if (value.IsEmpty)
         {
-            return throwOnError
-                ? throw new MalformedDpkgNameException(
+            return errorHandling is DpkgParsingErrorHandling.ReturnDefault
+                ? null
+                : throw new MalformedDpkgNameException(
                     message: "Package name is empty.",
                     packageName: value.ToString(),
-                    invalidCharacters: invalidCharacters)
-                : null;
+                    invalidCharacters: invalidCharacters);
         }
 
         if (!char.IsAsciiLetterLower(value[0]) && !char.IsAsciiDigit(value[0]))
@@ -70,11 +64,11 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
                 && currentCharacter != '.'
                 && currentCharacter != '+')
             {
-                if (!throwOnError)
+                if (errorHandling is DpkgParsingErrorHandling.ReturnDefault)
                 {
                     return null;
                 }
-                if (throwOnFirstError)
+                if (errorHandling is DpkgParsingErrorHandling.ThrowAtFirstError)
                 {
                     throw new MalformedDpkgNameException(
                         message: "Package name is invalid.",
@@ -88,12 +82,12 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
 
         if (invalidCharacters.Count > 0)
         {
-            return throwOnError
-                ? throw new MalformedDpkgNameException(
+            return errorHandling == DpkgParsingErrorHandling.ReturnDefault
+                ? null
+                : throw new MalformedDpkgNameException(
                     message: "Package name contains not allowed characters.",
                     packageName: value.ToString(),
-                    invalidCharacters: invalidCharacters)
-                : null;
+                    invalidCharacters: invalidCharacters);
         }
 
         return new DpkgName(value.ToString());
@@ -103,7 +97,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     public static DpkgName Parse(string value, IFormatProvider? formatProvider = null)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Parse(value.AsSpan(), throwOnError: true)!.Value;
+        return Parse(value.AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
     }
 
     /// <inheritdoc />
@@ -115,7 +109,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
             return false;
         }
 
-        var parsed = Parse(value.AsSpan(), throwOnError: false);
+        var parsed = Parse(value.AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
         return parsed.HasValue;
     }
@@ -123,13 +117,13 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <inheritdoc />
     public static DpkgName Parse(ReadOnlySpan<char> value, IFormatProvider? formatProvider = null)
     {
-        return Parse(value, throwOnError: true)!.Value;
+        return Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
     }
 
     /// <inheritdoc />
     public static bool TryParse(ReadOnlySpan<char> value, IFormatProvider? formatProvider, out DpkgName result)
     {
-        var parsed = Parse(value, throwOnError: false);
+        var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
         return parsed.HasValue;
     }
@@ -147,7 +141,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
             return false;
         }
 
-        var parsed = Parse(value.AsSpan(), throwOnError: false);
+        var parsed = Parse(value.AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
         return parsed.HasValue;
     }
@@ -159,7 +153,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <see langword="true" /> if <paramref name="value" /> was successfully parsed; otherwise, <see langword="false" />.</returns>
     public static bool TryParse(ReadOnlySpan<char> value, out DpkgName result)
     {
-        var parsed = Parse(value, throwOnError: false);
+        var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
         return parsed.HasValue;
     }

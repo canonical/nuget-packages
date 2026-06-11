@@ -146,48 +146,41 @@ public class DpkgNameUnitTests
 
     #endregion
 
-    #region Parse(ReadOnlySpan<char>, throwOnError, throwOnFirstError)
+    #region Parse(ReadOnlySpan<char>, DpkgParsingErrorHandling)
 
     [Fact]
-    public void Parse_WithThrowOnErrorFalseAndInvalidName_ReturnsNull()
+    public void Parse_WithReturnDefaultAndInvalidName_ReturnsNull()
     {
-        var result = DpkgName.Parse("Foo".AsSpan(), throwOnError: false);
+        var result = DpkgName.Parse("Foo".AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
         Assert.Null(result);
     }
 
     [Fact]
-    public void Parse_WithThrowOnErrorFalseAndValidName_ReturnsDpkgName()
+    public void Parse_WithReturnDefaultAndValidName_ReturnsDpkgName()
     {
-        var result = DpkgName.Parse("dotnet8".AsSpan(), throwOnError: false);
+        var result = DpkgName.Parse("dotnet8".AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
 
         Assert.NotNull(result);
         Assert.Equal(expected: "dotnet8", actual: result.Value.Identifier);
     }
 
     [Fact]
-    public void Parse_WithThrowOnFirstErrorButThrowOnErrorFalse_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(
-            () => DpkgName.Parse("foo".AsSpan(), throwOnError: false, throwOnFirstError: true));
-    }
-
-    [Fact]
-    public void Parse_WithThrowOnFirstError_ThrowsOnTheFirstInvalidCharacterOnly()
+    public void Parse_WithThrowAtFirstError_ThrowsOnTheFirstInvalidCharacterOnly()
     {
         // "a_b_c" has invalid characters at positions 1 and 3.
         var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgName.Parse("a_b_c".AsSpan(), throwOnError: true, throwOnFirstError: true));
+            () => DpkgName.Parse("a_b_c".AsSpan(), DpkgParsingErrorHandling.ThrowAtFirstError));
 
         var invalidCharacter = Assert.Single(exception.InvalidCharacters);
         Assert.Equal(expected: ('_', 1), actual: invalidCharacter);
     }
 
     [Fact]
-    public void Parse_WithoutThrowOnFirstError_CollectsAllInvalidCharacters()
+    public void Parse_WithThrowAfterProcessingAll_CollectsAllInvalidCharacters()
     {
         // "a_b_c" has invalid characters at positions 1 and 3.
         var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgName.Parse("a_b_c".AsSpan(), throwOnError: true, throwOnFirstError: false));
+            () => DpkgName.Parse("a_b_c".AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll));
 
         Assert.Equal(
             expected: [('_', 1), ('_', 3)],
@@ -198,7 +191,7 @@ public class DpkgNameUnitTests
     public void Parse_WithInvalidLeadingCharacter_ReportsItAtPositionZero()
     {
         var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgName.Parse("-foo".AsSpan(), throwOnError: true));
+            () => DpkgName.Parse("-foo".AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll));
 
         var invalidCharacter = Assert.Single(exception.InvalidCharacters);
         Assert.Equal(expected: ('-', 0), actual: invalidCharacter);
