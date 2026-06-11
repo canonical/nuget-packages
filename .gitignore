@@ -59,3 +59,4 @@ nunit-*.xml
 # editor configs
 .vscode
 .idea
+nuget-packages.sln.DotSettings.user
