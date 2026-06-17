@@ -43,7 +43,7 @@ public readonly partial record struct DpkgPackageName
         HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
 }
 
-public class MalformedDpkgPackageNameException : ParsingException
+public sealed class MalformedDpkgPackageNameException : ParsingException
 {
     public MalformedDpkgPackageNameException(
         string value,
