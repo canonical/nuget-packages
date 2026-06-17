@@ -1,12 +1,28 @@
-﻿using System.Collections.Immutable;
+﻿// Copyright (C) 2026 Canonical Ltd.
+//
+// SPDX-License-Identifier: GPL-3.0-only
+//
+// This program is free software: you can redistribute it and/or modify it under the terms of
+// the GNU General Public License version 3, as published by the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranties of MERCHANTABILITY, SATISFACTORY
+// QUALITY, or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License along with this
+// program.  If not, see http://www.gnu.org/licenses/.
+
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using Canonical.Common.Parsing;
 
 namespace Canonical.Dpkg;
 
 /// <summary>
 /// Represents an immutable instance of the name of a debian package.
 /// </summary>
-public readonly record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
+public readonly partial record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
 {
     internal DpkgPackageName(string identifier)
     {
@@ -25,38 +41,73 @@ public readonly record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
     public override string ToString() => Identifier;
 
     public static implicit operator string(DpkgPackageName dpkgPackageName) => dpkgPackageName.Identifier;
-    public static explicit operator DpkgPackageName(string value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
-    public static explicit operator DpkgPackageName(Span<char> value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+    public static explicit operator DpkgPackageName(string value) => Parse(value);
+    public static explicit operator DpkgPackageName(Span<char> value) => Parse(value);
 
     /// <summary>
-    /// Parses a string representation of a debian package name and performs validation.
+    /// Parses a span of characters representing a debian package name and performs validation.
     /// </summary>
-    /// <param name="value">The string representation of the debian package name.</param>
-    /// <param name="errorHandling">How the parser should deal with invalid version strings.</param>
-    /// <returns>The parsed and validated dpkg name.</returns>
-    /// <exception cref="MalformedDpkgNameException">When <paramref name="value"/> is not a valid dpkg name.</exception>
-    public static DpkgPackageName? Parse(ReadOnlySpan<char> value, DpkgParsingErrorHandling errorHandling)
+    /// <param name="packageNameSpan">The span of characters representing a debian package name.</param>
+    /// <param name="failFast">
+    /// <see langword="true"/> to abort parsing as soon as the first error gets detected;
+    /// <see langword="false"/> to process the entire value of <paramref name="packageNameSpan"/>.
+    /// </param>
+    /// <returns>The parsed and validated dpkg package name.</returns>
+    /// <exception cref="MalformedDpkgPackageNameException">
+    /// When <paramref name="packageNameSpan"/> does not represent a valid dpkg package name.
+    /// </exception>
+    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"/>
+    public static DpkgPackageName Parse(ReadOnlySpan<char> packageNameSpan, bool failFast = false)
     {
-        var invalidCharacters = ImmutableList<(char invalidCharacter, int position)>.Empty;
+        return TryParse(packageNameSpan, out var packageName, out var annotations, failFast)
+            ? packageName
+            : throw new MalformedDpkgPackageNameException(packageNameSpan.ToString(), annotations);
+    }
 
-        if (value.IsEmpty)
+    /// <summary>
+    /// Tries to parse a span of characters representing a debian package name and performs validation.
+    /// </summary>
+    /// <param name="packageNameSpan">The string representation of the debian package name.</param>
+    /// <param name="packageName">Will contain the parsed and validated dpkg package name.</param>
+    /// <param name="annotations">Will contain additional context regarding the parsed result.</param>
+    /// <param name="failFast">
+    /// <see langword="true"/> to abort parsing as soon as the first error gets detected.
+    /// <paramref name="annotations"/> will be empty; <see langword="false"/> to process
+    /// the entire value of <paramref name="packageNameSpan"/>.
+    /// </param>
+    /// <returns><see langword="true"/> if <paramref name="packageNameSpan"/> was parsed successfully; otherwise <see langword="false"/>.</returns>
+    public static bool TryParse(
+        ReadOnlySpan<char> packageNameSpan,
+        out DpkgPackageName packageName,
+        out ImmutableList<ParsingAnnotation> annotations,
+        bool failFast = false)
+    {
+        annotations = ImmutableList<ParsingAnnotation>.Empty;
+
+        if (packageNameSpan.Length < 2)
         {
-            return errorHandling is DpkgParsingErrorHandling.ReturnDefault
-                ? null
-                : throw new MalformedDpkgNameException(
-                    message: "Package name is empty.",
-                    packageName: value.ToString(),
-                    invalidCharacters: invalidCharacters);
+            if (failFast) goto abort;
+            annotations += ParsingAnnotation.Create(
+                descriptor: PackageNameTooShort,
+                location: packageNameSpan.GetRange());
         }
 
-        if (!char.IsAsciiLetterLower(value[0]) && !char.IsAsciiDigit(value[0]))
+        if (packageNameSpan.Length > 0
+            && !char.IsAsciiLetterLower(packageNameSpan[0])
+            && !char.IsAsciiDigit(packageNameSpan[0]))
         {
-            invalidCharacters = invalidCharacters.Add((value[0], 0));
+            if (failFast) goto abort;
+            annotations += ParsingAnnotation.Create(
+                descriptor: InvalidStartCharacter,
+                location: 0.AsIndexToRange(),
+                messageArgs: packageNameSpan[0]);
         }
 
-        for (var position = 1; position < value.Length; ++position)
+        List<char>? invalidCharacters = null;
+        ImmutableList<Range>.Builder? invalidCharactersPositions = null;
+        for (var position = 1; position < packageNameSpan.Length; ++position)
         {
-            char currentCharacter = value[position];
+            char currentCharacter = packageNameSpan[position];
 
             if (!char.IsAsciiLetterLower(currentCharacter)
                 && !char.IsAsciiDigit(currentCharacter)
@@ -64,40 +115,48 @@ public readonly record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
                 && currentCharacter != '.'
                 && currentCharacter != '+')
             {
-                if (errorHandling is DpkgParsingErrorHandling.ReturnDefault)
-                {
-                    return null;
-                }
-                if (errorHandling is DpkgParsingErrorHandling.ThrowAtFirstError)
-                {
-                    throw new MalformedDpkgNameException(
-                        message: "Package name is invalid.",
-                        packageName: value.ToString(),
-                        invalidCharacters: [(currentCharacter, position)]);
-                }
+                if (failFast) goto abort;
 
-                invalidCharacters = invalidCharacters.Add((currentCharacter, position));
+                if (invalidCharactersPositions is null)
+                {
+                    invalidCharactersPositions = ImmutableList.CreateBuilder<Range>();
+                    invalidCharactersPositions.Add(position.AsIndexToRange());
+                    invalidCharacters = [ currentCharacter ];
+                }
+                else
+                {
+                    invalidCharactersPositions.Add(position.AsIndexToRange());
+                    if (!invalidCharacters!.Contains(currentCharacter))
+                    {
+                        invalidCharacters.Add(currentCharacter);
+                    }
+                }
             }
         }
 
-        if (invalidCharacters.Count > 0)
+        if (invalidCharactersPositions is not null)
         {
-            return errorHandling == DpkgParsingErrorHandling.ReturnDefault
-                ? null
-                : throw new MalformedDpkgNameException(
-                    message: "Package name contains not allowed characters.",
-                    packageName: value.ToString(),
-                    invalidCharacters: invalidCharacters);
+            annotations += ParsingAnnotation.Create(InvalidCharacter,
+                locations: invalidCharactersPositions.ToImmutable(),
+                messageArgs: invalidCharacters!.JoinAsCharacterLiteralList());
         }
 
-        return new DpkgPackageName(value.ToString());
+        if (!annotations.IsEmpty) goto abort;
+
+        packageName = new DpkgPackageName(packageNameSpan.ToString());
+        return true;
+abort:
+        packageName = default;
+        return false;
     }
 
+    #region ISpanParsable<DpkgPackageName>
+
     /// <inheritdoc />
-    public static DpkgPackageName Parse(string value, IFormatProvider? formatProvider = null)
+    public static DpkgPackageName Parse(string? value, IFormatProvider? formatProvider)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Parse(value.AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+        return Parse(value.AsSpan());
     }
 
     /// <inheritdoc />
@@ -109,68 +168,20 @@ public readonly record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
             return false;
         }
 
-        var parsed = Parse(value.AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
-        result = parsed ?? default;
-        return parsed.HasValue;
+        return TryParse(value, out result, out _, failFast: true);
     }
 
     /// <inheritdoc />
-    public static DpkgPackageName Parse(ReadOnlySpan<char> value, IFormatProvider? formatProvider = null)
+    public static DpkgPackageName Parse(ReadOnlySpan<char> value, IFormatProvider? formatProvider)
     {
-        return Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+        return Parse(value);
     }
 
     /// <inheritdoc />
     public static bool TryParse(ReadOnlySpan<char> value, IFormatProvider? formatProvider, out DpkgPackageName result)
     {
-        var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
-        result = parsed ?? default;
-        return parsed.HasValue;
+        return TryParse(value, out result, out _, failFast: true);
     }
 
-    /// <summary>Tries to parse a string into a value.</summary>
-    /// <param name="value">The string to parse.</param>
-    /// <param name="result">When this method returns, contains the result of successfully parsing <paramref name="value" /> or an undefined value on failure.</param>
-    /// <returns>
-    /// <see langword="true" /> if <paramref name="value" /> was successfully parsed; otherwise, <see langword="false" />.</returns>
-    public static bool TryParse([NotNullWhen(true)] string? value, out DpkgPackageName result)
-    {
-        if (value is null)
-        {
-            result = default;
-            return false;
-        }
-
-        var parsed = Parse(value.AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
-        result = parsed ?? default;
-        return parsed.HasValue;
-    }
-
-    /// <summary>Tries to parse a span of characters into a value.</summary>
-    /// <param name="value">The span of characters to parse.</param>
-    /// <param name="result">When this method returns, contains the result of successfully parsing <paramref name="value" />, or an undefined value on failure.</param>
-    /// <returns>
-    /// <see langword="true" /> if <paramref name="value" /> was successfully parsed; otherwise, <see langword="false" />.</returns>
-    public static bool TryParse(ReadOnlySpan<char> value, out DpkgPackageName result)
-    {
-        var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
-        result = parsed ?? default;
-        return parsed.HasValue;
-    }
-}
-
-public class MalformedDpkgNameException : FormatException
-{
-    public string PackageName { get; }
-    public ImmutableList<(char InvalidCharacter, int Position)> InvalidCharacters { get; }
-
-    public MalformedDpkgNameException(
-        string message,
-        string packageName,
-        ImmutableList<(char InvalidCharacter, int Position)> invalidCharacters)
-        : base(message)
-    {
-        PackageName = packageName;
-        InvalidCharacters = invalidCharacters;
-    }
+    #endregion
 }

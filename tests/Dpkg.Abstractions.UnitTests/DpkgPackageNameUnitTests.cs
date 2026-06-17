@@ -19,8 +19,6 @@ public class DpkgPackageNameUnitTests
 {
     public static TheoryData<string> ValidNames =>
     [
-        "a",                 // single lowercase letter
-        "0",                 // single digit
         "z9",
         "dotnet8",
         "lib-foo",           // hyphen
@@ -33,6 +31,8 @@ public class DpkgPackageNameUnitTests
 
     public static TheoryData<string> InvalidNames =>
     [
+        "a",                 // too short: must be at least two characters long
+        "0",                 // too short: must be at least two characters long
         "Foo",               // uppercase letter
         "fooBar",            // uppercase letter in the middle
         "-foo",              // may not start with a hyphen
@@ -58,13 +58,13 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(InvalidNames))]
     public void Parse_WithInvalidName_ThrowsMalformedDpkgNameException(string name)
     {
-        Assert.Throws<MalformedDpkgNameException>(() => DpkgPackageName.Parse(name, formatProvider: null));
+        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(name, formatProvider: null));
     }
 
     [Fact]
     public void Parse_WithEmptyString_ThrowsMalformedDpkgNameException()
     {
-        Assert.Throws<MalformedDpkgNameException>(() => DpkgPackageName.Parse(string.Empty, formatProvider: null));
+        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(string.Empty, formatProvider: null));
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(ValidNames))]
     public void TryParse_WithValidName_ReturnsTrueAndPopulatesResult(string name)
     {
-        var success = DpkgPackageName.TryParse(name, out var result);
+        var success = DpkgPackageName.TryParse(name, formatProvider: null, out var result);
 
         Assert.True(success);
         Assert.Equal(expected: name, actual: result.Identifier);
@@ -91,7 +91,7 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(InvalidNames))]
     public void TryParse_WithInvalidName_ReturnsFalseAndDefaultResult(string name)
     {
-        var success = DpkgPackageName.TryParse(name, out var result);
+        var success = DpkgPackageName.TryParse(name, formatProvider: null, out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -100,7 +100,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithNull_ReturnsFalse()
     {
-        var success = DpkgPackageName.TryParse(null, out var result);
+        var success = DpkgPackageName.TryParse(null, formatProvider: null, out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -129,7 +129,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithValidSpan_ReturnsTrueAndPopulatesResult()
     {
-        var success = DpkgPackageName.TryParse("dotnet8".AsSpan(), out var result);
+        var success = DpkgPackageName.TryParse("dotnet8".AsSpan(), formatProvider: null, out var result);
 
         Assert.True(success);
         Assert.Equal(expected: "dotnet8", actual: result.Identifier);
@@ -138,7 +138,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithInvalidSpan_ReturnsFalse()
     {
-        var success = DpkgPackageName.TryParse("Foo".AsSpan(), out var result);
+        var success = DpkgPackageName.TryParse("Foo".AsSpan(), formatProvider: null, out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -146,55 +146,51 @@ public class DpkgPackageNameUnitTests
 
     #endregion
 
-    #region Parse(ReadOnlySpan<char>, DpkgParsingErrorHandling)
+    #region TryParse(ReadOnlySpan<char>, out, out annotations, failFast)
 
     [Fact]
-    public void Parse_WithReturnDefaultAndInvalidName_ReturnsNull()
+    public void TryParse_WithFailFastAndInvalidName_AbortsWithoutAnnotations()
     {
-        var result = DpkgPackageName.Parse("Foo".AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
-        Assert.Null(result);
+        var success = DpkgPackageName.TryParse(
+            "a_b_c".AsSpan(), out var result, out var annotations, failFast: true);
+
+        Assert.False(success);
+        Assert.Equal(expected: default, actual: result);
+        Assert.Empty(annotations);
     }
 
     [Fact]
-    public void Parse_WithReturnDefaultAndValidName_ReturnsDpkgName()
+    public void TryParse_WithoutFailFastAndValidName_ReturnsTrueWithoutAnnotations()
     {
-        var result = DpkgPackageName.Parse("dotnet8".AsSpan(), DpkgParsingErrorHandling.ReturnDefault);
+        var success = DpkgPackageName.TryParse(
+            "dotnet8".AsSpan(), out var result, out var annotations, failFast: false);
 
-        Assert.NotNull(result);
-        Assert.Equal(expected: "dotnet8", actual: result.Value.Identifier);
+        Assert.True(success);
+        Assert.Equal(expected: "dotnet8", actual: result.Identifier);
+        Assert.Empty(annotations);
     }
 
     [Fact]
-    public void Parse_WithThrowAtFirstError_ThrowsOnTheFirstInvalidCharacterOnly()
+    public void TryParse_WithoutFailFast_CollectsAllInvalidCharacterLocations()
     {
         // "a_b_c" has invalid characters at positions 1 and 3.
-        var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgPackageName.Parse("a_b_c".AsSpan(), DpkgParsingErrorHandling.ThrowAtFirstError));
+        var success = DpkgPackageName.TryParse(
+            "a_b_c".AsSpan(), out _, out var annotations, failFast: false);
 
-        var invalidCharacter = Assert.Single(exception.InvalidCharacters);
-        Assert.Equal(expected: ('_', 1), actual: invalidCharacter);
-    }
-
-    [Fact]
-    public void Parse_WithThrowAfterProcessingAll_CollectsAllInvalidCharacters()
-    {
-        // "a_b_c" has invalid characters at positions 1 and 3.
-        var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgPackageName.Parse("a_b_c".AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll));
-
-        Assert.Equal(
-            expected: [('_', 1), ('_', 3)],
-            actual: exception.InvalidCharacters);
+        Assert.False(success);
+        var annotation = Assert.Single(annotations);
+        Assert.Equal(expected: "DPKG-NAME-003", actual: annotation.Identifier);
+        Assert.Equal(expected: [1..2, 3..4], actual: annotation.Locations);
     }
 
     [Fact]
     public void Parse_WithInvalidLeadingCharacter_ReportsItAtPositionZero()
     {
-        var exception = Assert.Throws<MalformedDpkgNameException>(
-            () => DpkgPackageName.Parse("-foo".AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll));
+        var exception = Assert.Throws<MalformedDpkgPackageNameException>(
+            () => DpkgPackageName.Parse("-foo".AsSpan()));
 
-        var invalidCharacter = Assert.Single(exception.InvalidCharacters);
-        Assert.Equal(expected: ('-', 0), actual: invalidCharacter);
+        var annotation = Assert.Single(exception.Annotations);
+        Assert.Equal(expected: 0..1, actual: Assert.Single(annotation.Locations));
     }
 
     #endregion
@@ -204,16 +200,16 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void MalformedDpkgNameException_ExposesOffendingPackageName()
     {
-        var exception = Assert.Throws<MalformedDpkgNameException>(
+        var exception = Assert.Throws<MalformedDpkgPackageNameException>(
             () => DpkgPackageName.Parse("foo_bar", formatProvider: null));
 
-        Assert.Equal(expected: "foo_bar", actual: exception.PackageName);
+        Assert.Equal(expected: "foo_bar", actual: exception.Value);
     }
 
     [Fact]
     public void MalformedDpkgNameException_IsAFormatException()
     {
-        var exception = new MalformedDpkgNameException("message", "pkg", []);
+        var exception = new MalformedDpkgPackageNameException("pkg", []);
         Assert.IsAssignableFrom<FormatException>(exception);
     }
 
@@ -240,7 +236,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void ExplicitConversionFromString_WithInvalidName_ThrowsMalformedDpkgNameException()
     {
-        Assert.Throws<MalformedDpkgNameException>(() => (DpkgPackageName)"Foo");
+        Assert.Throws<MalformedDpkgPackageNameException>(() => (DpkgPackageName)"Foo");
     }
 
     #endregion

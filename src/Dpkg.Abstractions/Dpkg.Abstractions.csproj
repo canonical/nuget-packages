@@ -21,4 +21,8 @@ program.  If not, see http://www.gnu.org/licenses/.
     <RootNamespace>Canonical.Dpkg</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
 </Project>

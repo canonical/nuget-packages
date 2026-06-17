@@ -59,27 +59,32 @@ public record ParsingAnnotation(
         return message.ToString();
     }
 
-    public void ToString(StringBuilder value)
+    internal void ToString(StringBuilder value, bool isListItem = false)
     {
-        value.Append(Identifier).Append(' ').Append(Title).Append(": ").AppendLine(Message);
+        if (isListItem)
+        {
+            value.Append("- ");
+        }
+
+        value.Append('[').Append(Identifier).Append("] ").Append(Title);
 
         if (Locations.Count > 0)
         {
-            value.AppendLine(" at ").AppendJoin(", ", Locations.ToLocationStrings()).Append(')');
+            value.Append(" (at ").AppendJoin(", ", Locations.ToLocationStrings()).Append(')');
         }
+
+        value.Append(": ").Append(Message);
 
         if (Description is not null)
         {
-            value.Append("\n\n").Append(Description);
-
-            if (HelpLink is not null)
-            {
-                value.Append(" (See also: ").Append(HelpLink).Append(')');
-            }
+            value.Append(isListItem ? "\n  " : "\n")
+                 .Append(Description);
         }
-        else if (HelpLink is not null)
+
+        if (HelpLink is not null)
         {
-            value.Append("\n\nSee also: ").Append(HelpLink);
+            value.Append(isListItem ? "\n  See also: " : "\nSee also: ")
+                 .Append(HelpLink);
         }
     }
 

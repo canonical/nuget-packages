@@ -61,9 +61,11 @@ public class ParsingException : FormatException
 
         for (int i = 0; i < annotations.Count; ++i)
         {
-            result.Append(i == 0 ? "\n\nAnnotations:\n- " : "\n\n- ");
-            annotations[i].ToString(result);
+            result.Append(i == 0 ? "\n\nAnnotations:\n" : "\n");
+            annotations[i].ToString(result, isListItem: true);
         }
+
+        result.AppendLine();
 
         return result.ToString();
     }
