@@ -6,9 +6,9 @@ namespace Canonical.Dpkg;
 /// <summary>
 /// Represents an immutable instance of the name of a debian package.
 /// </summary>
-public readonly record struct DpkgName : ISpanParsable<DpkgName>
+public readonly record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
 {
-    internal DpkgName(string identifier)
+    internal DpkgPackageName(string identifier)
     {
         Identifier = identifier;
     }
@@ -24,9 +24,9 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <inheritdoc />
     public override string ToString() => Identifier;
 
-    public static implicit operator string(DpkgName dpkgName) => dpkgName.Identifier;
-    public static explicit operator DpkgName(string value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
-    public static explicit operator DpkgName(Span<char> value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+    public static implicit operator string(DpkgPackageName dpkgPackageName) => dpkgPackageName.Identifier;
+    public static explicit operator DpkgPackageName(string value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
+    public static explicit operator DpkgPackageName(Span<char> value) => Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
 
     /// <summary>
     /// Parses a string representation of a debian package name and performs validation.
@@ -35,7 +35,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <param name="errorHandling">How the parser should deal with invalid version strings.</param>
     /// <returns>The parsed and validated dpkg name.</returns>
     /// <exception cref="MalformedDpkgNameException">When <paramref name="value"/> is not a valid dpkg name.</exception>
-    public static DpkgName? Parse(ReadOnlySpan<char> value, DpkgParsingErrorHandling errorHandling)
+    public static DpkgPackageName? Parse(ReadOnlySpan<char> value, DpkgParsingErrorHandling errorHandling)
     {
         var invalidCharacters = ImmutableList<(char invalidCharacter, int position)>.Empty;
 
@@ -90,18 +90,18 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
                     invalidCharacters: invalidCharacters);
         }
 
-        return new DpkgName(value.ToString());
+        return new DpkgPackageName(value.ToString());
     }
 
     /// <inheritdoc />
-    public static DpkgName Parse(string value, IFormatProvider? formatProvider = null)
+    public static DpkgPackageName Parse(string value, IFormatProvider? formatProvider = null)
     {
         ArgumentNullException.ThrowIfNull(value);
         return Parse(value.AsSpan(), DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
     }
 
     /// <inheritdoc />
-    public static bool TryParse([NotNullWhen(true)] string? value, IFormatProvider? formatProvider, out DpkgName result)
+    public static bool TryParse([NotNullWhen(true)] string? value, IFormatProvider? formatProvider, out DpkgPackageName result)
     {
         if (value is null)
         {
@@ -115,13 +115,13 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     }
 
     /// <inheritdoc />
-    public static DpkgName Parse(ReadOnlySpan<char> value, IFormatProvider? formatProvider = null)
+    public static DpkgPackageName Parse(ReadOnlySpan<char> value, IFormatProvider? formatProvider = null)
     {
         return Parse(value, DpkgParsingErrorHandling.ThrowAfterProcessingAll)!.Value;
     }
 
     /// <inheritdoc />
-    public static bool TryParse(ReadOnlySpan<char> value, IFormatProvider? formatProvider, out DpkgName result)
+    public static bool TryParse(ReadOnlySpan<char> value, IFormatProvider? formatProvider, out DpkgPackageName result)
     {
         var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
@@ -133,7 +133,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <param name="result">When this method returns, contains the result of successfully parsing <paramref name="value" /> or an undefined value on failure.</param>
     /// <returns>
     /// <see langword="true" /> if <paramref name="value" /> was successfully parsed; otherwise, <see langword="false" />.</returns>
-    public static bool TryParse([NotNullWhen(true)] string? value, out DpkgName result)
+    public static bool TryParse([NotNullWhen(true)] string? value, out DpkgPackageName result)
     {
         if (value is null)
         {
@@ -151,7 +151,7 @@ public readonly record struct DpkgName : ISpanParsable<DpkgName>
     /// <param name="result">When this method returns, contains the result of successfully parsing <paramref name="value" />, or an undefined value on failure.</param>
     /// <returns>
     /// <see langword="true" /> if <paramref name="value" /> was successfully parsed; otherwise, <see langword="false" />.</returns>
-    public static bool TryParse(ReadOnlySpan<char> value, out DpkgName result)
+    public static bool TryParse(ReadOnlySpan<char> value, out DpkgPackageName result)
     {
         var parsed = Parse(value, DpkgParsingErrorHandling.ReturnDefault);
         result = parsed ?? default;
