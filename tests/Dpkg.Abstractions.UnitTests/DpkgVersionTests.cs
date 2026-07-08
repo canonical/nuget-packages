@@ -13,13 +13,20 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
-using System.IO;
 using Xunit.Abstractions;
 
 namespace Canonical.Dpkg.UnitTests;
 
 public class DpkgVersionTests
 {
+    private const string SortedDpkgVersionsFile = "valid-dpkg-versions.txt";
+
+    private readonly ITestOutputHelper _testOutput;
+
+    public DpkgVersionTests(ITestOutputHelper output)
+    {
+        _testOutput = output;
+    }
 
     [Fact]
     public void ToString_OfEmptyDpkgVersion_Returns_EmptyString()
@@ -264,6 +271,52 @@ public class DpkgVersionTests
 
         Assert.False(success);
         Assert.Contains(annotations, annotation => annotation.Identifier == "DPKG-VERSION-004");
+    }
+
+    [Fact]
+    public void Sort_WithRandomizedVersionsOrder_MaintainsOriginalOrder()
+    {
+        // at time of writing SortedDpkgVersionsFile has 21647 entries
+        // this gives some buffer is case the list grows
+        var versions = new List<(int OriginalIndex, DpkgVersion Version)>(capacity: 23000);
+
+        foreach (var versionString in File.ReadLines(SortedDpkgVersionsFile))
+        {
+            versions.Add((versions.Count, Parse(versionString)));
+        }
+
+        var random = new Random(Seed: 42); // Use fixed seed for reproducibility
+
+        // Fisher–Yates shuffle (https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle)
+        for (int i = versions.Count - 1; i > 0; i--)
+        {
+            int j = random.Next(maxValue: i + 1); // max value is exclusive
+            (versions[i], versions[j]) = (versions[j], versions[i]);
+        }
+
+        var orderedVersions = versions
+            .OrderBy(entry => entry.Version)
+            .ThenBy(entry => entry.Version.ToString());
+
+        string shuffledAndSortedFileName = Path.GetFileNameWithoutExtension(SortedDpkgVersionsFile) + ".shuffled-and-sorted.txt";
+        using var file = new FileStream(shuffledAndSortedFileName, FileMode.Create, FileAccess.Write);
+        using var writer = new StreamWriter(file);
+
+        int index = 0;
+        bool containsError = false;
+        foreach (var entry in orderedVersions)
+        {
+            if (entry.OriginalIndex != index)
+            {
+                _testOutput.WriteLine($"'{entry.Version}' found at index {index} but expected at {entry.OriginalIndex}");
+                containsError = true;
+            }
+
+            writer.WriteLine(entry.Version.ToString());
+            ++index;
+        }
+
+        Assert.False(containsError, $"Shuffling and sorting the version list resulted in a different order. Compare {SortedDpkgVersionsFile} with {shuffledAndSortedFileName} to see the difference.");
     }
 
     #endregion

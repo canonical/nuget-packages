@@ -48,6 +48,7 @@ public class DpkgPackageNameUnitTests
 
     [Theory]
     [MemberData(nameof(ValidNames))]
+    [FileData("valid-dpkg-names.txt")]
     public void Parse_WithValidName_ReturnsDpkgNameWithMatchingIdentifier(string name)
     {
         var dpkgName = DpkgPackageName.Parse(name, formatProvider: null);

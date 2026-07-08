@@ -37,4 +37,9 @@ program.  If not, see http://www.gnu.org/licenses/.
     <ProjectReference Include="../../src/Dpkg.Abstractions/Dpkg.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="valid-dpkg-names.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="valid-dpkg-versions.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
