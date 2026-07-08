@@ -47,12 +47,6 @@ public static class HelperExtensions
         }
     }
 
-    extension(IEnumerable<Range> locations)
-    {
-        public IEnumerable<string> ToLocationStrings() => locations.Select(location => location.ToLocationString());
-        public string JoinAsLocationStrings() => string.Join(", ", locations.ToLocationStrings());
-    }
-
     extension(ReadOnlySpan<char> span)
     {
         public Range GetRange()

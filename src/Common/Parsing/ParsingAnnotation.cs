@@ -70,7 +70,7 @@ public record ParsingAnnotation(
 
         if (Locations.Count > 0)
         {
-            value.Append(" (at ").AppendJoin(", ", Locations.ToLocationStrings()).Append(')');
+            value.Append(" (at ").AppendJoin(", ", Locations.Select(l => l.ToLocationString())).Append(')');
         }
 
         value.Append(": ").Append(Message);
@@ -109,7 +109,7 @@ public record ParsingAnnotation(
             Title: descriptor.Title,
             Description: descriptor.Description,
             Message: descriptor.MessageFormat,
-            Locations: ImmutableList.Create(location),
+            Locations: [ location ],
             HelpLink: descriptor.HelpLink);
     }
 

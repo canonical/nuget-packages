@@ -104,7 +104,7 @@ public readonly partial record struct DpkgPackageName : ISpanParsable<DpkgPackag
         }
 
         List<char>? invalidCharacters = null;
-        ImmutableList<Range>.Builder? invalidCharactersPositions = null;
+        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
         for (var position = 1; position < packageNameSpan.Length; ++position)
         {
             char currentCharacter = packageNameSpan[position];
@@ -117,28 +117,24 @@ public readonly partial record struct DpkgPackageName : ISpanParsable<DpkgPackag
             {
                 if (failFast) goto abort;
 
-                if (invalidCharactersPositions is null)
+                if (invalidCharacters is null)
                 {
-                    invalidCharactersPositions = ImmutableList.CreateBuilder<Range>();
-                    invalidCharactersPositions.Add(position.AsIndexToRange());
                     invalidCharacters = [ currentCharacter ];
+                    invalidCharacterLocations = ImmutableList.CreateBuilder<Range>();
                 }
-                else
+                else if (!invalidCharacters.Contains(currentCharacter))
                 {
-                    invalidCharactersPositions.Add(position.AsIndexToRange());
-                    if (!invalidCharacters!.Contains(currentCharacter))
-                    {
-                        invalidCharacters.Add(currentCharacter);
-                    }
+                    invalidCharacters.Add(currentCharacter);
                 }
+                invalidCharacterLocations!.Add(position.AsIndexToRange());
             }
         }
 
-        if (invalidCharactersPositions is not null)
+        if (invalidCharacters is not null)
         {
-            annotations += ParsingAnnotation.Create(InvalidCharacter,
-                locations: invalidCharactersPositions.ToImmutable(),
-                messageArgs: invalidCharacters!.JoinAsCharacterLiteralList());
+            annotations += ParsingAnnotation.Create(InvalidCharacters,
+                locations: invalidCharacterLocations!.ToImmutable(),
+                messageArgs: invalidCharacters.JoinAsCharacterLiteralList());
         }
 
         if (!annotations.IsEmpty) goto abort;

@@ -34,10 +34,10 @@ public readonly partial record struct DpkgPackageName
         Description: "Package names must start with a lowercase alphanumeric character (a-z or 0-9).",
         HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
 
-    private static readonly ParsingAnnotationDescriptor InvalidCharacter = new(
+    private static readonly ParsingAnnotationDescriptor InvalidCharacters = new(
         Identifier: "DPKG-NAME-003",
-        Title: "Invalid character",
-        MessageFormat: "Package name contains invalid characters: {0}.",
+        Title: "Invalid characters",
+        MessageFormat: "Package name contains invalid character(s): {0}.",
         Description: "Package names must consist only of lowercase letters (a-z), " +
                      "digits (0-9), plus (+) and minus (-) signs, and periods (.).",
         HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
@@ -50,5 +50,6 @@ public sealed class MalformedDpkgPackageNameException : ParsingException
         ImmutableList<ParsingAnnotation> annotations)
         : base(message: $"Failed to parse dpkg package name '{value}'.", value: value, annotations: annotations)
     {
+        HelpLink = "https://www.debian.org/doc/debian-policy/ch-controlfields.html#source";
     }
 }
