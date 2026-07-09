@@ -73,6 +73,20 @@ public readonly partial record struct DpkgPackageName :
     /// </summary>
     /// <param name="packageNameSpan">The string representation of the debian package name.</param>
     /// <param name="packageName">Will contain the parsed and validated dpkg package name.</param>
+    /// <returns><see langword="true"/> if <paramref name="packageNameSpan"/> was parsed successfully; otherwise <see langword="false"/>.</returns>
+    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"/>
+    public static bool TryParse(
+        ReadOnlySpan<char> packageNameSpan,
+        out DpkgPackageName packageName)
+    {
+        return TryParse(packageNameSpan, out packageName, out _, failFast: true);
+    }
+
+    /// <summary>
+    /// Tries to parse a span of characters representing a debian package name and performs validation.
+    /// </summary>
+    /// <param name="packageNameSpan">The string representation of the debian package name.</param>
+    /// <param name="packageName">Will contain the parsed and validated dpkg package name.</param>
     /// <param name="annotations">Will contain additional context regarding the parsed result.</param>
     /// <param name="failFast">
     /// <see langword="true"/> to abort parsing as soon as the first error gets detected.
@@ -80,6 +94,7 @@ public readonly partial record struct DpkgPackageName :
     /// the entire value of <paramref name="packageNameSpan"/>.
     /// </param>
     /// <returns><see langword="true"/> if <paramref name="packageNameSpan"/> was parsed successfully; otherwise <see langword="false"/>.</returns>
+    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"/>
     public static bool TryParse(
         ReadOnlySpan<char> packageNameSpan,
         out DpkgPackageName packageName,

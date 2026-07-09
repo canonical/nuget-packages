@@ -97,14 +97,14 @@ public partial class DpkgVersion :
         IFormatProvider? formatProvider)
     {
         ArgumentNullException.ThrowIfNull(versionString);
-        return Parse(versionString, out _);
+        return Parse(versionString);
     }
 
     /// <inheritdoc/>
     public static bool TryParse(
-        [NotNullWhen(true)] string? versionString,
+        [NotNullWhen(returnValue: true)] string? versionString,
         IFormatProvider? formatProvider,
-        [MaybeNullWhen(false)] out DpkgVersion version)
+        [NotNullWhen(returnValue: true)] out DpkgVersion? version)
     {
         if (versionString is null)
         {
@@ -112,7 +112,7 @@ public partial class DpkgVersion :
             return false;
         }
 
-        return TryParse(versionString, out version, out _, failFast: true);
+        return TryParse(versionString, out version);
     }
 
     /// <inheritdoc/>
@@ -120,22 +120,33 @@ public partial class DpkgVersion :
         ReadOnlySpan<char> versionSpan,
         IFormatProvider? formatProvider)
     {
-        return Parse(versionSpan, out _);
+        return Parse(versionSpan);
     }
 
     /// <inheritdoc/>
     public static bool TryParse(
         ReadOnlySpan<char> versionSpan,
         IFormatProvider? formatProvider,
-        [MaybeNullWhen(false)] out DpkgVersion version)
+        [NotNullWhen(returnValue: true)] out DpkgVersion? version)
     {
-        return TryParse(versionSpan, out version, out _, failFast: true);
+        return TryParse(versionSpan, out version);
     }
 
     #endregion
 
     public static DpkgVersion Parse(
         ReadOnlySpan<char> versionSpan,
+        DpkgVersionOptions options = DpkgVersionOptions.Default,
+        bool failFast = false)
+    {
+        return TryParse(versionSpan, out var version, out var annotations, options, failFast)
+            ? version
+            : throw new MalformedDpkgVersionException(versionSpan.ToString(), annotations);
+    }
+
+    public static DpkgVersion Parse(
+        ReadOnlySpan<char> versionSpan,
+        // ReSharper disable once OutParameterValueIsAlwaysDiscarded.Global
         out ImmutableList<ParsingAnnotation> annotations,
         DpkgVersionOptions options = DpkgVersionOptions.Default,
         bool failFast = false)
@@ -147,7 +158,16 @@ public partial class DpkgVersion :
 
     public static bool TryParse(
         ReadOnlySpan<char> versionSpan,
-        [MaybeNullWhen(false)] out DpkgVersion version,
+        [NotNullWhen(returnValue: true)] out DpkgVersion? version,
+        DpkgVersionOptions options = DpkgVersionOptions.Default)
+    {
+        // It does not make sense to failFast: false, because the annotations always get discarded.
+        return TryParse(versionSpan, out version, out _, options, failFast: true);
+    }
+
+    public static bool TryParse(
+        ReadOnlySpan<char> versionSpan,
+        [NotNullWhen(returnValue: true)] out DpkgVersion? version,
         out ImmutableList<ParsingAnnotation> annotations,
         DpkgVersionOptions options = DpkgVersionOptions.Default,
         bool failFast = false)

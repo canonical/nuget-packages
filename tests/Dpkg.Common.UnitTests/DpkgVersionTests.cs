@@ -326,6 +326,6 @@ public class DpkgVersionTests
 
     private static DpkgVersion Parse(string version)
     {
-        return DpkgVersion.Parse(version, formatProvider: null);
+        return DpkgVersion.Parse(version, failFast: false);
     }
 }
