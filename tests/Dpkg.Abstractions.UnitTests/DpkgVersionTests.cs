@@ -189,9 +189,12 @@ public class DpkgVersionTests
         Assert.True(null < dpkgVersion);
 
         Assert.Equal(expected: 1, actual: dpkgVersion.CompareTo((object?)null));
+        Assert.Equal(expected: 1, actual: dpkgVersion.CompareTo((string?)null));
         Assert.Equal(expected: 1, actual: dpkgVersion.CompareTo((DpkgVersion?)null));
 
-        Assert.False(dpkgVersion.Equals(null));
+        Assert.False(dpkgVersion.Equals((object?)null));
+        Assert.False(dpkgVersion.Equals((string?)null));
+        Assert.False(dpkgVersion.Equals((DpkgVersion?)null));
         Assert.False(dpkgVersion == null);
         Assert.True(dpkgVersion != null);
 

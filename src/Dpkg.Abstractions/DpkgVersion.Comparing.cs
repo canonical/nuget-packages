@@ -1,15 +1,15 @@
 // Copyright (C) 2026 Canonical Ltd.
-// 
+//
 // SPDX-License-Identifier: GPL-3.0-only
-// 
+//
 // This program is free software: you can redistribute it and/or modify it under the terms of
 // the GNU General Public License version 3, as published by the Free Software Foundation.
-// 
+//
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranties of MERCHANTABILITY, SATISFACTORY
 // QUALITY, or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 // for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
@@ -23,6 +23,9 @@ public partial class DpkgVersion
         DpkgVersion debVersion => Equals(debVersion),
         _ => false
     };
+
+    /// <inheritdoc cref="IEquatable{T}.Equals(T?)"/>
+    public bool Equals(string? other) => CompareTo(other) == 0;
 
     /// <inheritdoc cref="IEquatable{T}.Equals(T?)"/>
     public bool Equals(DpkgVersion? other) => CompareTo(other) == 0;
@@ -61,11 +64,19 @@ public partial class DpkgVersion
     public int CompareTo(object? other) => other switch
     {
         null => 1,
+        string stringVersion => CompareTo(stringVersion),
         DpkgVersion debVersion => CompareTo(debVersion),
         _ => throw new ArgumentException(
             paramName: nameof(other),
             message: $"Can't compare type {other.GetType().FullName} with type {typeof(DpkgVersion).FullName}.")
     };
+
+    public int CompareTo(string? other)
+    {
+        if (other is null) return 1;
+        var version = Parse(other, out _, failFast: true);
+        return CompareTo(version);
+    }
 
     /// <inheritdoc cref="IComparable{T}.CompareTo(T?)" />
     /// <remarks>

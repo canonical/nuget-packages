@@ -23,7 +23,9 @@ namespace Canonical.Dpkg;
 /// </summary>
 public partial class DpkgVersion :
     IComparable,
+    IComparable<string>,
     IComparable<DpkgVersion>,
+    IEquatable<string>,
     IEquatable<DpkgVersion>
 {
     /// <summary>
