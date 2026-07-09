@@ -337,8 +337,5 @@ public class DpkgVersionTests
 
     #endregion
 
-    private static DpkgVersion Parse(string version)
-    {
-        return DpkgVersion.Parse(version, failFast: false);
-    }
+    private static DpkgVersion Parse(string version) => DpkgVersion.Parse(version);
 }

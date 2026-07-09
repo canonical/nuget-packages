@@ -14,6 +14,7 @@
 // program.  If not, see http://www.gnu.org/licenses/.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Canonical.Dpkg;
 
@@ -26,7 +27,8 @@ public partial class DpkgVersion :
     IComparable<string>,
     IComparable<DpkgVersion>,
     IEquatable<string>,
-    IEquatable<DpkgVersion>
+    IEquatable<DpkgVersion>,
+    IFormattable
 {
     /// <summary>
     /// The character that indicates the boundary between the epoch and remaining deb version string representation.
@@ -211,6 +213,319 @@ public partial class DpkgVersion :
     /// </summary>
     /// <returns>A string that represents the current object.</returns>
     public override string ToString() => _originalString;
+
+    /// <summary>
+    /// Formats the value of the current instance using the specified format string.
+    /// </summary>
+    /// <param name="format">
+    /// <para>
+    /// The format string controlling how the version is rendered. If <see langword="null"/>, empty,
+    /// or <c>"G"</c>, the result is identical to <see cref="ToString()"/>.
+    /// </para>
+    /// <para>
+    /// A format string is a sequence of the following specifiers and literals:
+    /// </para>
+    /// <list type="table">
+    ///   <listheader><term>Specifier</term><description>Output</description></listheader>
+    ///   <item>
+    ///     <term><c>G</c></term>
+    ///     <description>The original version string (same as <see cref="ToString()"/>).</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>:</c></term>
+    ///     <description>
+    ///     The epoch delimiter character (<c>:</c>), but only when <see cref="Epoch"/> is not
+    ///     <see langword="null"/>; otherwise nothing is appended.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>-</c></term>
+    ///     <description>
+    ///     The revision delimiter character (<c>-</c>), but only when <see cref="Revision"/> is not
+    ///     <see langword="null"/>; otherwise nothing is appended.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>E</c>, <c>E0</c>-<c>E9</c></term>
+    ///     <description>
+    ///     <see cref="Epoch"/> as a string, or nothing when <see cref="Epoch"/> is
+    ///     <see langword="null"/>. Optionally followed by a single digit <c>0</c>–<c>9</c> that
+    ///     specifies a minimum field width; the value is left-padded with zeros to that width
+    ///     (when the epoch is present), or nothing is appended (when the epoch is absent).
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>e</c></term>
+    ///     <description>
+    ///     <see cref="EpochValue"/> as a decimal number. Without a digit suffix the numeric value
+    ///     is always appended (e.g. <c>0</c> when the epoch is omitted). With a digit suffix
+    ///     <c>0</c>–<c>9</c> that specifies a minimum field width: when <see cref="EpochValue"/>
+    ///     equals <see cref="DEFAULT_EPOCH_VALUE"/> the field is zero-filled; when
+    ///     <see cref="Epoch"/> is <see langword="null"/> and the digit is <c>0</c> nothing is
+    ///     appended; otherwise the value is left-padded with zeros to the requested width.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>U</c> / <c>U0</c></term>
+    ///     <description><see cref="UpstreamVersion"/>.</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>U1</c></term>
+    ///     <description>
+    ///     <see cref="RevertedUpstreamVersion"/>, or nothing when it is <see langword="null"/>.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>U2</c></term>
+    ///     <description>
+    ///     The <c>+really</c> delimiter, but only when <see cref="RealUpstreamVersion"/> is not
+    ///     <see langword="null"/>; otherwise nothing is appended.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>U3</c></term>
+    ///     <description>
+    ///     <see cref="RealUpstreamVersion"/>, or nothing when it is <see langword="null"/>.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>U4</c></term>
+    ///     <description><see cref="EffectiveUpstreamVersion"/>.</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>R</c> / <c>R0</c></term>
+    ///     <description><see cref="Revision"/>, or nothing when it is <see langword="null"/>.</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>R1</c></term>
+    ///     <description><see cref="DebianRevision"/>, or nothing when it is <see langword="null"/>.</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>R2</c></term>
+    ///     <description>
+    ///     The <c>ubuntu</c> delimiter, but only when <see cref="UbuntuRevision"/> is not
+    ///     <see langword="null"/>; otherwise nothing is appended.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>R3</c></term>
+    ///     <description><see cref="UbuntuRevision"/>, or nothing when it is <see langword="null"/>.</description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>\'</c> / <c>\"</c> … <c>\'</c> / <c>\"</c></term>
+    ///     <description>
+    ///     Characters enclosed in matching single or double quotes are appended verbatim, allowing
+    ///     any character (including specifier characters) to be used as literals.
+    ///     </description>
+    ///   </item>
+    ///   <item>
+    ///     <term><c>\</c><em>c</em></term>
+    ///     <description>
+    ///     Backslash escape: the character immediately following the backslash is appended
+    ///     verbatim.
+    ///     </description>
+    ///   </item>
+    /// </list>
+    /// <para>
+    /// Any other character in the format string, an unclosed quote, a trailing backslash, or an
+    /// unrecognised digit suffix on <c>U</c> or <c>R</c> causes a <see cref="FormatException"/>
+    /// to be thrown.
+    /// </para>
+    /// </param>
+    /// <param name="formatProvider">This parameter is currently unused.</param>
+    /// <returns>A string representation of the current instance in the requested format.</returns>
+    /// <exception cref="FormatException">
+    /// <paramref name="format"/> contains an invalid or unrecognised specifier.
+    /// </exception>
+    /// <example>
+    /// <code>
+    /// var v = DpkgVersion.Parse("1:2+really1-3ubuntu4");
+    ///
+    /// v.ToString("\"Version: '\"E:U-R'\\''")         // → "Version: '1:2+really1-3ubuntu4'"  (canonical form)
+    /// v.ToString("E3:U-R")        // → "001:2+really1-3ubuntu4" (epoch padded to 3 digits)
+    /// v.ToString("U1U2U3")        // → "2+really1"             (reverted + delimiter + real)
+    /// v.ToString("R1R2R3")        // → "3ubuntu4"              (debian + literal + ubuntu)
+    /// </code>
+    /// </example>
+    public virtual string ToString(string? format, IFormatProvider? formatProvider = null)
+    {
+        if (string.IsNullOrEmpty(format) || format == "G") return ToString();
+
+        var version = new StringBuilder();
+
+        char? escapeCharacter = null;
+        for (int i = 0; i < format.Length; ++i)
+        {
+            var currentCharacter = format[i];
+
+            if (currentCharacter == '\\')
+            {
+                if (++i >= format.Length) goto fail;
+                version.Append(format[i]);
+            }
+            else if (escapeCharacter.HasValue)
+            {
+                if (currentCharacter == escapeCharacter.Value)
+                {
+                    escapeCharacter = null;
+                }
+                else
+                {
+                    version.Append(currentCharacter);
+                }
+            }
+            else if (currentCharacter is '\'' or '\"')
+            {
+                escapeCharacter = currentCharacter;
+            }
+            else if (currentCharacter == EPOCH_DELIMITER)
+            {
+                if (Epoch is not null)
+                {
+                    version.Append(EPOCH_DELIMITER);
+                }
+            }
+            else if (currentCharacter == REVISION_DELIMITER)
+            {
+                if (Revision is not null)
+                {
+                    version.Append(REVISION_DELIMITER);
+                }
+            }
+            else if (currentCharacter == 'G')
+            {
+                version.Append(_originalString);
+            }
+            else if (currentCharacter == 'E')
+            {
+                if (TryParseNextAsDigit(format, i, out var digits))
+                {
+                    ++i;
+
+                    if (Epoch is not null)
+                    {
+                        var epoch = Epoch.PadLeft(digits, '0');
+                        version.Append(epoch);
+                    }
+                }
+                else
+                {
+                    version.Append(Epoch);
+                }
+            }
+            else if (currentCharacter == 'e')
+            {
+                if (TryParseNextAsDigit(format, i, out var digits))
+                {
+                    ++i;
+
+                    if (EpochValue == DEFAULT_EPOCH_VALUE)
+                    {
+                        version.Append('0', digits);
+                    }
+                    else if (Epoch is not null || digits > 0)
+                    {
+                        var number = EpochValue.ToString().PadLeft(digits, '0');
+                        version.Append(number);
+                    }
+                }
+                else
+                {
+                    version.Append(EpochValue);
+                }
+            }
+            else if (currentCharacter == 'U')
+            {
+                if (TryParseNextAsDigit(format, i, out var type))
+                {
+                    ++i;
+                }
+
+                if (type == 0)
+                {
+                    version.Append(UpstreamVersion);
+                }
+                else if (type == 1)
+                {
+                    version.Append(RevertedUpstreamVersion);
+                }
+                else if (type == 2)
+                {
+                    if (RealUpstreamVersion is not null)
+                    {
+                        version.Append(REAL_UPSTREAM_VERSION_DELIMITER);
+                    }
+                }
+                else if (type == 3)
+                {
+                    version.Append(RealUpstreamVersion);
+                }
+                else if (type == 4)
+                {
+                    version.Append(EffectiveUpstreamVersion);
+                }
+                else
+                {
+                    goto fail;
+                }
+            }
+            else if (currentCharacter == 'R')
+            {
+                if (TryParseNextAsDigit(format, i, out var type))
+                {
+                    ++i;
+                }
+
+                if (type == 0)
+                {
+                    version.Append(Revision);
+                }
+                else if (type == 1)
+                {
+                    version.Append(DebianRevision);
+                }
+                else if (type == 2)
+                {
+                    if (UbuntuRevision is not null)
+                    {
+                        version.Append(UBUNTU_REVISION_DELIMITER);
+                    }
+                }
+                else if (type == 3)
+                {
+                    version.Append(UbuntuRevision);
+                }
+                else
+                {
+                    goto fail;
+                }
+            }
+            else
+            {
+                goto fail;
+            }
+        }
+
+        if (escapeCharacter.HasValue) goto fail;
+
+        return version.ToString();
+
+        fail:
+        throw new FormatException($"The format string '{format}' is not in a correct format.");
+
+        static bool TryParseNextAsDigit(string value, int offset, out int digit)
+        {
+            digit = 0;
+
+            if (++offset >= value.Length) return false;
+
+            var next = value[offset];
+            if (!char.IsDigit(next)) return false;
+
+            digit = next - '0';
+            return true;
+        }
+    }
 
     /// <inheritdoc cref="Object.GetHashCode()"/>
     [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
