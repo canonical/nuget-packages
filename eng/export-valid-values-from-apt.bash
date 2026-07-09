@@ -19,15 +19,13 @@ set -u
 set -o pipefail
 set -x
 
-ROOT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/.."
-
 apt list 2>/dev/null \
   | awk 'NF>1 {sub(/\/.*/, "", $1); print $1}' \
   | sort -u \
-  > "${ROOT_DIR}/tests/Dpkg.Abstractions.UnitTests/valid-dpkg-names.txt"
+  > "valid-dpkg-names.txt"
 
 apt list 2>/dev/null \
   | awk 'NF>1 {print $2}' \
   | sort -u \
   | python3 "${ROOT_DIR}/eng/sort-dpkg-versions.py" \
-  > "${ROOT_DIR}/tests/Dpkg.Abstractions.UnitTests/valid-dpkg-versions.txt"
+  > "valid-dpkg-versions.txt"

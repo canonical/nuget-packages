@@ -17,7 +17,7 @@ program.  If not, see http://www.gnu.org/licenses/.
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Canonical.Dpkg.Abstractions</AssemblyName>
+    <AssemblyName>Canonical.Dpkg.Common</AssemblyName>
     <RootNamespace>Canonical.Dpkg</RootNamespace>
   </PropertyGroup>
 
