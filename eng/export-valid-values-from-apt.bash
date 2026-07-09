@@ -22,10 +22,10 @@ set -x
 apt list 2>/dev/null \
   | awk 'NF>1 {sub(/\/.*/, "", $1); print $1}' \
   | sort -u \
-  > "valid-dpkg-names.txt"
+  > "dpkg-names.txt"
 
 apt list 2>/dev/null \
   | awk 'NF>1 {print $2}' \
   | sort -u \
   | python3 "${ROOT_DIR}/eng/sort-dpkg-versions.py" \
-  > "valid-dpkg-versions.txt"
+  > "dpkg-versions_sorted.txt"
