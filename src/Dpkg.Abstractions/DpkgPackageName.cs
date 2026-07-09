@@ -22,7 +22,11 @@ namespace Canonical.Dpkg;
 /// <summary>
 /// Represents an immutable instance of the name of a debian package.
 /// </summary>
-public readonly partial record struct DpkgPackageName : ISpanParsable<DpkgPackageName>
+public readonly partial record struct DpkgPackageName :
+    ISpanParsable<DpkgPackageName>,
+    IComparable,
+    IComparable<string>,
+    IComparable<DpkgPackageName>
 {
     internal DpkgPackageName(string identifier)
     {
@@ -180,4 +184,69 @@ abort:
     }
 
     #endregion
+
+    public int CompareTo(object? other)
+    {
+        return other switch
+        {
+            null => 1,
+            string => CompareTo(other),
+            DpkgPackageName packageName => CompareTo(packageName.Identifier),
+            _ => throw new ArgumentException(
+                paramName: nameof(other),
+                message: $"Can't compare type {other.GetType().FullName} with type {typeof(DpkgVersion).FullName}.")
+        };
+    }
+
+    public int CompareTo(DpkgPackageName other) => CompareTo(other.Identifier);
+
+    public int CompareTo(string? other)
+    {
+        if (other is null) return 1;
+
+        for (int i = 0, j = 0; i < Identifier.Length || j < other.Length;)
+        {
+            while ((i < Identifier.Length && !char.IsAsciiDigit(Identifier[i])) ||
+                   (j < other.Length && !char.IsAsciiDigit(other[j])))
+            {
+                int weight = Identifier[i].CompareTo(other[i]);
+
+                if (weight != 0)
+                    return weight;
+
+                i++;
+                j++;
+            }
+
+            // skip leading zeros;
+            while (i < Identifier.Length && Identifier[i] == '0') i++;
+            while (j < other.Length && other[j] == '0') j++;
+
+            // stores the first numerical difference when comparing from left to right
+            int mostSignificantNumericalDifference = 0;
+
+            while (i < Identifier.Length && char.IsAsciiDigit(Identifier[i]) &&
+                   j < other.Length && char.IsAsciiDigit(other[j]))
+            {
+                if (mostSignificantNumericalDifference == 0)
+                    mostSignificantNumericalDifference = Identifier[i] - other[j];
+
+                ++i;
+                ++j;
+            }
+
+            // A has more digits than B, therefore A is larger
+            if (i < Identifier.Length && char.IsAsciiDigit(Identifier[i]))
+                return 1;
+
+            // A has more digits than A, therefore B is larger
+            if (j < other.Length && char.IsAsciiDigit(other[j]))
+                return -1;
+
+            if (mostSignificantNumericalDifference != 0)
+                return mostSignificantNumericalDifference;
+        }
+
+        return Identifier.CompareTo(other, StringComparison.Ordinal);
+    }
 }

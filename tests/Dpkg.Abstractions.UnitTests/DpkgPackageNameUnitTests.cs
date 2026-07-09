@@ -44,6 +44,33 @@ public class DpkgPackageNameUnitTests
         "föö",               // non-ASCII letter
     ];
 
+    [Fact]
+    public void Sort()
+    {
+        DpkgPackageName?[] names =
+        [
+            DpkgPackageName.Parse("dotnet10"),
+            DpkgPackageName.Parse("dotnet09"),
+            null,
+            DpkgPackageName.Parse("dotnet8"),
+            DpkgPackageName.Parse("dotnet9"),
+            null,
+        ];
+
+        Array.Sort(names);
+
+        Assert.Null(names[0]);
+        Assert.Null(names[1]);
+        Assert.True(names[2].HasValue);
+        Assert.Equal("dotnet8", names[2]!.Value.Identifier);
+        Assert.True(names[3].HasValue);
+        Assert.Equal("dotnet09", names[3]!.Value.Identifier);
+        Assert.True(names[4].HasValue);
+        Assert.Equal("dotnet9", names[4]!.Value.Identifier);
+        Assert.True(names[5].HasValue);
+        Assert.Equal("dotnet10", names[5]!.Value.Identifier);
+    }
+
     #region Parse(string, IFormatProvider?)
 
     [Theory]
