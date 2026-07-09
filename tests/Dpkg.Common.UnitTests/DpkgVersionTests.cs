@@ -277,6 +277,19 @@ public class DpkgVersionTests
     }
 
     [Fact]
+    public void CompareTo_DocumentationStringExample_Works()
+    {
+        var version = DpkgVersion.Parse("1");
+
+        Assert.Equal(0, version.CompareTo(DpkgVersion.Parse("01")));
+        Assert.Equal(0, version.CompareTo("01"));
+        Assert.Equal(0, version.CompareTo(1));
+        Assert.Equal(1, version.CompareTo(null as object));
+        Assert.Equal(1, version.CompareTo(null as string));
+        Assert.Equal(1, version.CompareTo(null as DpkgVersion));
+    }
+
+    [Fact]
     public void Sort_WithRandomizedVersionsOrder_MaintainsOriginalOrder()
     {
         // at time of writing SortedDpkgVersionsFile has 21647 entries

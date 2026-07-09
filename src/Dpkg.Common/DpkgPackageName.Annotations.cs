@@ -18,7 +18,7 @@ using Canonical.Common.Parsing;
 
 namespace Canonical.Dpkg;
 
-public readonly partial record struct DpkgPackageName
+public readonly partial struct DpkgPackageName
 {
     private static readonly ParsingAnnotationDescriptor PackageNameTooShort = new(
         Identifier: "DPKG-NAME-001",

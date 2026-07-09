@@ -22,11 +22,15 @@ namespace Canonical.Dpkg;
 /// <summary>
 /// Represents an immutable instance of the name of a debian package.
 /// </summary>
-public readonly partial record struct DpkgPackageName :
+public readonly partial struct DpkgPackageName :
     ISpanParsable<DpkgPackageName>,
+    IEquatable<string>,
+    IEquatable<DpkgPackageName>,
+    IEquatable<DpkgPackageName?>,
     IComparable,
     IComparable<string>,
-    IComparable<DpkgPackageName>
+    IComparable<DpkgPackageName>,
+    IComparable<DpkgPackageName?>
 {
     internal DpkgPackageName(string identifier)
     {
@@ -200,24 +204,27 @@ abort:
 
     #endregion
 
+    #region IComparable
+
     public int CompareTo(object? other)
     {
         return other switch
         {
             null => 1,
-            string => CompareTo(other),
             DpkgPackageName packageName => CompareTo(packageName.Identifier),
-            _ => throw new ArgumentException(
-                paramName: nameof(other),
-                message: $"Can't compare type {other.GetType().FullName} with type {typeof(DpkgVersion).FullName}.")
+            string name => CompareTo(name),
+            _ => CompareTo(other.ToString())
         };
     }
 
     public int CompareTo(DpkgPackageName other) => CompareTo(other.Identifier);
 
+    public int CompareTo(DpkgPackageName? other) => other.HasValue ? CompareTo(other.Value.Identifier) : 1;
+
     public int CompareTo(string? other)
     {
         if (other is null) return 1;
+        if (ReferenceEquals(Identifier, other)) return 0;
 
         for (int i = 0, j = 0; i < Identifier.Length || j < other.Length;)
         {
@@ -264,4 +271,71 @@ abort:
 
         return Identifier.CompareTo(other, StringComparison.Ordinal);
     }
+
+    #endregion
+
+    #region IEquatable
+
+    public override bool Equals([NotNullWhen(returnValue: true)] object? other)
+    {
+        return other switch
+        {
+            null => false,
+            DpkgPackageName packageName => Equals(packageName),
+            string packageName => Equals(packageName),
+            _ => Equals(other.ToString()),
+        };
+    }
+
+    public bool Equals([NotNullWhen(returnValue: true)] string? other)
+    {
+        return string.Equals(Identifier, Identifier, StringComparison.Ordinal);
+    }
+
+    public bool Equals(DpkgPackageName other) => Equals(Identifier, other.Identifier);
+
+    public bool Equals([NotNullWhen(returnValue: true)] DpkgPackageName? other) => other.HasValue && Equals(other.Value);
+
+    #endregion
+
+    #region operators ==, !=
+
+    public static bool operator ==(DpkgPackageName a, DpkgPackageName b) => a.Equals(b);
+    public static bool operator !=(DpkgPackageName a, DpkgPackageName b) => !a.Equals(b);
+
+    /// <summary>
+    /// Indicates whether the two <see cref="DpkgPackageName"/> instances are equal to each other.
+    /// </summary>
+    /// <param name="a">The first <see cref="DpkgPackageName"/> instance to compare with <paramref name="b"/>.</param>
+    /// <param name="b">The second <see cref="DpkgPackageName"/> instance to compare with <paramref name="a"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if <paramref name="a"/> is equal to <paramref name="b"/>;
+    /// otherwise <see langword="false"/>.
+    /// </returns>
+    public static bool operator ==(DpkgPackageName? a, DpkgPackageName? b)
+    {
+        if (a is null) return b is null;
+        return a.Value.Equals(b);
+    }
+
+    /// <summary>
+    /// Indicates whether the two <see cref="DpkgPackageName"/> instances are not equal to each other.
+    /// </summary>
+    /// <param name="a">The first <see cref="DpkgPackageName"/> instance to compare with <paramref name="b"/>.</param>
+    /// <param name="b">The second <see cref="DpkgPackageName"/> instance to compare with <paramref name="a"/>.</param>
+    /// <returns>
+    /// <see langword="true"/> if <paramref name="a"/> is not equal to <paramref name="b"/>;
+    /// otherwise <see langword="false"/>.
+    /// </returns>
+    public static bool operator !=(DpkgPackageName? a, DpkgPackageName? b)
+    {
+        if (a is null) return b is not null;
+        return !a.Value.Equals(b);
+    }
+
+    #endregion
+
+    // NOTE: Although the IComparable interfaces are implemented we do not want to implement the <, <=, >, >= operators.
+    //       IComparable was implemented to allow methods like Array.Sort, Linq Order to sort the elements in a more
+    //       practical and consistent way.
 }
