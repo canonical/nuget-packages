@@ -289,7 +289,7 @@ abort:
 
     public bool Equals([NotNullWhen(returnValue: true)] string? other)
     {
-        return string.Equals(Identifier, Identifier, StringComparison.Ordinal);
+        return string.Equals(Identifier, other, StringComparison.Ordinal);
     }
 
     public bool Equals(DpkgPackageName other) => Equals(Identifier, other.Identifier);
