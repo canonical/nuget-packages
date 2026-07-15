@@ -107,10 +107,43 @@ abort:
         return false;
     }
 
+    private static readonly ParsingAnnotationDescriptor PackageNameTooShort = new(
+        Identifier: "DPKG-NAME-001",
+        Title: "Short package name",
+        MessageFormat: "Package name is too short.",
+        Description: "Package names must be at least two characters long.",
+        HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
+
+    private static readonly ParsingAnnotationDescriptor InvalidStartCharacter = new (
+        Identifier: "DPKG-NAME-002",
+        Title: "Invalid start character",
+        MessageFormat: "Package name can not start with the character '{0}'.",
+        Description: "Package names must start with a lowercase alphanumeric character (a-z or 0-9).",
+        HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
+
+    private static readonly ParsingAnnotationDescriptor InvalidCharacters = new(
+        Identifier: "DPKG-NAME-003",
+        Title: "Invalid characters",
+        MessageFormat: "Package name contains invalid character(s): {0}.",
+        Description: "Package names must consist only of lowercase letters (a-z), " +
+                     "digits (0-9), plus (+) and minus (-) signs, and periods (.).",
+        HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
+
     private static partial ParsingException CreateParsingException(
         ReadOnlySpan<char> identifierSpan,
         ImmutableList<ParsingAnnotation> annotations)
     {
         return new DpkgPackageNameParsingException(identifierSpan.ToString(), annotations);
+    }
+}
+
+public sealed class DpkgPackageNameParsingException : ParsingException
+{
+    public DpkgPackageNameParsingException(
+        string value,
+        ImmutableList<ParsingAnnotation> annotations)
+        : base(message: $"Failed to parse dpkg package name '{value}'.", value: value, annotations: annotations)
+    {
+        HelpLink = "https://www.debian.org/doc/debian-policy/ch-controlfields.html#source";
     }
 }
