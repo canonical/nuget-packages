@@ -14,19 +14,21 @@ for more details.
 You should have received a copy of the GNU General Public License along with this
 program.  If not, see http://www.gnu.org/licenses/.
 -->
-<Solution>
-  <Folder Name="/Dpkg/">
-    <Project Path="src/Dpkg.Common/Dpkg.Common.csproj" />
-    <Project Path="tests/Dpkg.Common.UnitTests/Dpkg.Common.UnitTests.csproj" />
-  </Folder>
-  <Folder Name="/Apt/">
-    <Project Path="src/Apt.Common/Apt.Common.csproj" />
-    <Project Path="tests/Apt.Common.UnitTests/Apt.Common.UnitTests.csproj" />
-  </Folder>
-  <Folder Name="/Madison/">
-    <Project Path="src/Madison/Madison.csproj" />
-    <Project Path="tests/Madison.UnitTests/Madison.UnitTests.csproj" />
-  </Folder>
-  <Project Path="src/Common.SourceGenerator/Common.SourceGeneration.csproj" />
-  <Project Path="src/Common/Common.csproj" />
-</Solution>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Canonical.Apt.Common</AssemblyName>
+    <RootNamespace>Canonical.Apt</RootNamespace>
+
+    <!-- fails build if source generator failed to generate source -->
+    <WarningsAsErrors>CS8785</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Common.SourceGenerator/Common.SourceGeneration.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+</Project>
