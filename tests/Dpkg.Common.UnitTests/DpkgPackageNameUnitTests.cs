@@ -86,13 +86,13 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(InvalidNames))]
     public void Parse_WithInvalidName_ThrowsMalformedDpkgNameException(string name)
     {
-        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(name));
+        Assert.Throws<DpkgPackageNameParsingException>(() => DpkgPackageName.Parse(name));
     }
 
     [Fact]
     public void Parse_WithEmptyString_ThrowsMalformedDpkgNameException()
     {
-        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(string.Empty));
+        Assert.Throws<DpkgPackageNameParsingException>(() => DpkgPackageName.Parse(string.Empty));
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void Parse_WithInvalidLeadingCharacter_ReportsItAtPositionZero()
     {
-        var exception = Assert.Throws<MalformedDpkgPackageNameException>(
+        var exception = Assert.Throws<DpkgPackageNameParsingException>(
             () => DpkgPackageName.Parse("-foo".AsSpan()));
 
         var annotation = Assert.Single(exception.Annotations);
@@ -228,7 +228,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void MalformedDpkgNameException_ExposesOffendingPackageName()
     {
-        var exception = Assert.Throws<MalformedDpkgPackageNameException>(
+        var exception = Assert.Throws<DpkgPackageNameParsingException>(
             () => DpkgPackageName.Parse("foo_bar"));
 
         Assert.Equal(expected: "foo_bar", actual: exception.Value);
@@ -237,7 +237,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void MalformedDpkgNameException_IsAFormatException()
     {
-        var exception = new MalformedDpkgPackageNameException("pkg", []);
+        var exception = new DpkgPackageNameParsingException("pkg", []);
         Assert.IsAssignableFrom<FormatException>(exception);
     }
 
@@ -264,7 +264,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void ExplicitConversionFromString_WithInvalidName_ThrowsMalformedDpkgNameException()
     {
-        Assert.Throws<MalformedDpkgPackageNameException>(() => (DpkgPackageName)"Foo");
+        Assert.Throws<DpkgPackageNameParsingException>(() => (DpkgPackageName)"Foo");
     }
 
     #endregion

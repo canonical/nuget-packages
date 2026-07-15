@@ -111,6 +111,6 @@ abort:
         ReadOnlySpan<char> identifierSpan,
         ImmutableList<ParsingAnnotation> annotations)
     {
-        return new MalformedDpkgPackageNameException(identifierSpan.ToString(), annotations);
+        return new DpkgPackageNameParsingException(identifierSpan.ToString(), annotations);
     }
 }

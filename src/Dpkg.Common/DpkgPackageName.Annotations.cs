@@ -43,9 +43,9 @@ public readonly partial struct DpkgPackageName
         HelpLink: new Uri("https://www.debian.org/doc/debian-policy/ch-controlfields.html#source"));
 }
 
-public sealed class MalformedDpkgPackageNameException : ParsingException
+public sealed class DpkgPackageNameParsingException : ParsingException
 {
-    public MalformedDpkgPackageNameException(
+    public DpkgPackageNameParsingException(
         string value,
         ImmutableList<ParsingAnnotation> annotations)
         : base(message: $"Failed to parse dpkg package name '{value}'.", value: value, annotations: annotations)
