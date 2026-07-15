@@ -122,7 +122,7 @@ public class DpkgPackageNameUnitTests
         var success = DpkgPackageName.TryParse(name, out var result);
 
         Assert.False(success);
-        Assert.Equal(expected: default, actual: result);
+        Assert.Equal(expected: string.Empty, actual: result.Identifier);
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class DpkgPackageNameUnitTests
         var success = DpkgPackageName.TryParse(null, out var result);
 
         Assert.False(success);
-        Assert.Equal(expected: default, actual: result);
+        Assert.Equal(expected: string.Empty, actual: result.Identifier);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public class DpkgPackageNameUnitTests
         var success = DpkgPackageName.TryParse("Foo".AsSpan(), out var result);
 
         Assert.False(success);
-        Assert.Equal(expected: default, actual: result);
+        Assert.Equal(expected: string.Empty, actual: result.Identifier);
     }
 
     #endregion
@@ -183,7 +183,7 @@ public class DpkgPackageNameUnitTests
             "a_b_c".AsSpan(), out var result, out var annotations, failFast: true);
 
         Assert.False(success);
-        Assert.Equal(expected: default, actual: result);
+        Assert.Equal(expected: string.Empty, actual: result.Identifier);
         Assert.Empty(annotations);
     }
 
