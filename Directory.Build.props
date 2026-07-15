@@ -28,5 +28,6 @@ program.  If not, see http://www.gnu.org/licenses/.
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>14.0</LangVersion>
   </PropertyGroup>
 </Project>

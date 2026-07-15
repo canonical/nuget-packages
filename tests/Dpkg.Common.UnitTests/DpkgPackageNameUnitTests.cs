@@ -78,7 +78,7 @@ public class DpkgPackageNameUnitTests
     [FileData("dpkg-names.txt")]
     public void Parse_WithValidName_ReturnsDpkgNameWithMatchingIdentifier(string name)
     {
-        var dpkgName = DpkgPackageName.Parse(name, formatProvider: null);
+        var dpkgName = DpkgPackageName.Parse(name);
         Assert.Equal(expected: name, actual: dpkgName.Identifier);
     }
 
@@ -86,19 +86,19 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(InvalidNames))]
     public void Parse_WithInvalidName_ThrowsMalformedDpkgNameException(string name)
     {
-        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(name, formatProvider: null));
+        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(name));
     }
 
     [Fact]
     public void Parse_WithEmptyString_ThrowsMalformedDpkgNameException()
     {
-        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(string.Empty, formatProvider: null));
+        Assert.Throws<MalformedDpkgPackageNameException>(() => DpkgPackageName.Parse(string.Empty));
     }
 
     [Fact]
     public void Parse_WithNull_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => DpkgPackageName.Parse(null!, formatProvider: null));
+        Assert.Throws<ArgumentNullException>(() => DpkgPackageName.Parse(null as string, provider: null));
     }
 
     #endregion
@@ -109,7 +109,7 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(ValidNames))]
     public void TryParse_WithValidName_ReturnsTrueAndPopulatesResult(string name)
     {
-        var success = DpkgPackageName.TryParse(name, formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse(name, out var result);
 
         Assert.True(success);
         Assert.Equal(expected: name, actual: result.Identifier);
@@ -119,7 +119,7 @@ public class DpkgPackageNameUnitTests
     [MemberData(nameof(InvalidNames))]
     public void TryParse_WithInvalidName_ReturnsFalseAndDefaultResult(string name)
     {
-        var success = DpkgPackageName.TryParse(name, formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse(name, out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -128,7 +128,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithNull_ReturnsFalse()
     {
-        var success = DpkgPackageName.TryParse(null, formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse(null, out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -137,7 +137,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithFormatProviderOverload_BehavesIdentically()
     {
-        var success = DpkgPackageName.TryParse("dotnet8", formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse("dotnet8", out var result);
 
         Assert.True(success);
         Assert.Equal(expected: "dotnet8", actual: result.Identifier);
@@ -150,14 +150,14 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void Parse_WithValidSpan_ReturnsDpkgName()
     {
-        var dpkgName = DpkgPackageName.Parse("dotnet8".AsSpan(), formatProvider: null);
+        var dpkgName = DpkgPackageName.Parse("dotnet8".AsSpan());
         Assert.Equal(expected: "dotnet8", actual: dpkgName.Identifier);
     }
 
     [Fact]
     public void TryParse_WithValidSpan_ReturnsTrueAndPopulatesResult()
     {
-        var success = DpkgPackageName.TryParse("dotnet8".AsSpan(), formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse("dotnet8".AsSpan(), out var result);
 
         Assert.True(success);
         Assert.Equal(expected: "dotnet8", actual: result.Identifier);
@@ -166,7 +166,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void TryParse_WithInvalidSpan_ReturnsFalse()
     {
-        var success = DpkgPackageName.TryParse("Foo".AsSpan(), formatProvider: null, out var result);
+        var success = DpkgPackageName.TryParse("Foo".AsSpan(), out var result);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -229,7 +229,7 @@ public class DpkgPackageNameUnitTests
     public void MalformedDpkgNameException_ExposesOffendingPackageName()
     {
         var exception = Assert.Throws<MalformedDpkgPackageNameException>(
-            () => DpkgPackageName.Parse("foo_bar", formatProvider: null));
+            () => DpkgPackageName.Parse("foo_bar"));
 
         Assert.Equal(expected: "foo_bar", actual: exception.Value);
     }
@@ -248,7 +248,7 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void ImplicitStringConversion_ReturnsIdentifier()
     {
-        var dpkgName = DpkgPackageName.Parse("dotnet8", formatProvider: null);
+        var dpkgName = DpkgPackageName.Parse("dotnet8");
         string asString = dpkgName;
 
         Assert.Equal(expected: "dotnet8", actual: asString);
@@ -274,15 +274,15 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void ToString_ReturnsIdentifier()
     {
-        var dpkgName = DpkgPackageName.Parse("dotnet8", formatProvider: null);
+        var dpkgName = DpkgPackageName.Parse("dotnet8");
         Assert.Equal(expected: "dotnet8", actual: dpkgName.ToString());
     }
 
     [Fact]
     public void Equals_WithSameIdentifier_ReturnsTrue()
     {
-        var first = DpkgPackageName.Parse("dotnet8", formatProvider: null);
-        var second = DpkgPackageName.Parse("dotnet8", formatProvider: null);
+        var first = DpkgPackageName.Parse("dotnet8");
+        var second = DpkgPackageName.Parse("dotnet8");
 
         Assert.Equal(expected: first, actual: second);
         Assert.Equal(expected: first.GetHashCode(), actual: second.GetHashCode());
@@ -291,8 +291,8 @@ public class DpkgPackageNameUnitTests
     [Fact]
     public void Equals_WithDifferentIdentifier_ReturnsFalse()
     {
-        var first = DpkgPackageName.Parse("dotnet8", formatProvider: null);
-        var second = DpkgPackageName.Parse("dotnet9", formatProvider: null);
+        var first = DpkgPackageName.Parse("dotnet8");
+        var second = DpkgPackageName.Parse("dotnet9");
 
         Assert.NotEqual(first, second);
     }
