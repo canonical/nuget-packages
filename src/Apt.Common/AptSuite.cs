@@ -20,7 +20,7 @@ using Canonical.Common.Parsing;
 
 namespace Canonical.Apt;
 
-public readonly partial struct AptSuite : IIdentifier<AptSuite>
+public readonly partial struct AptSuite : IIdentifier<AptSuite>, IFormattable
 {
     public AptSuite()
     {
@@ -47,6 +47,16 @@ public readonly partial struct AptSuite : IIdentifier<AptSuite>
     public AptSeries Series { get; }
 
     public AptPocket Pocket { get; }
+
+    public string ToString(string? format, IFormatProvider? formatProvider) => format switch
+    {
+        null or "" or "G" => ToString(),
+        "g" => $"{Series}-{Pocket.DisplayName}",
+        "S" => Series.ToString(),
+        "P" => Pocket.ToString(),
+        "p" => Pocket.DisplayName,
+        _ => throw new FormatException($"The format string '{format}' is not in a correct format.")
+    };
 
     public static bool TryParse(
         ReadOnlySpan<char> identifierSpan,
