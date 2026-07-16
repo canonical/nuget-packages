@@ -33,18 +33,23 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
-        if (identifierSpan.Length > 0
-            && !char.IsAsciiLetterLower(identifierSpan[0]))
+        if (identifierSpan.Length == 0)
+        {
+            identifier = Release;
+            return true;
+        }
+
+        if (!char.IsAsciiLetterLower(identifierSpan[0]))
         {
             if (failFast) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidStartCharacter,
-                location: 0.AsIndexToRange(),
+                location: 0,
                 messageArgs: identifierSpan[0]);
         }
 
         List<char>? invalidCharacters = null;
-        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
+        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
         for (var position = 1; position < identifierSpan.Length; ++position)
         {
             char currentCharacter = identifierSpan[position];
@@ -57,13 +62,13 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
                 if (invalidCharacters is null)
                 {
                     invalidCharacters = [ currentCharacter ];
-                    invalidCharacterLocations = ImmutableList.CreateBuilder<Range>();
+                    invalidCharacterLocations = ImmutableList.CreateBuilder<Location>();
                 }
                 else if (!invalidCharacters.Contains(currentCharacter))
                 {
                     invalidCharacters.Add(currentCharacter);
                 }
-                invalidCharacterLocations!.Add(position.AsIndexToRange());
+                invalidCharacterLocations!.Add(position);
             }
         }
 
@@ -72,6 +77,12 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
             annotations += ParsingAnnotation.Create(InvalidCharacters,
                 locations: invalidCharacterLocations!.ToImmutable(),
                 messageArgs: invalidCharacters.JoinAsCharacterLiteralList());
+        }
+
+        if (identifierSpan[^1] == '-')
+        {
+            annotations += ParsingAnnotation.Create(InvalidEndCharacter,
+                locations: [new Location(identifierSpan.Length - 1)]);
         }
 
         if (!annotations.IsEmpty) goto abort;
@@ -95,6 +106,12 @@ abort:
         MessageFormat: "Pocket name contains invalid character(s): {0}.",
         Description: "Pocket names must consist only of lowercase letters (a-z), " +
                      "and minus (-) signs.");
+
+    private static readonly ParsingAnnotationDescriptor InvalidEndCharacter = new (
+        Identifier: "APT-POCKET-003",
+        Title: "Invalid start character",
+        MessageFormat: "Pocket name can not end with the character '-'.",
+        Description: "Pocket names must end with a lowercase letter (a-z).");
 
     private static partial ParsingException CreateParsingException(
         ReadOnlySpan<char> identifierSpan,

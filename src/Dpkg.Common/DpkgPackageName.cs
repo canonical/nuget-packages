@@ -50,7 +50,7 @@ public readonly partial struct DpkgPackageName : IIdentifier<DpkgPackageName>
             if (failFast) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: PackageNameTooShort,
-                location: identifierSpan.GetRange());
+                location: identifierSpan.ToLocation());
         }
 
         if (identifierSpan.Length > 0
@@ -60,12 +60,12 @@ public readonly partial struct DpkgPackageName : IIdentifier<DpkgPackageName>
             if (failFast) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidStartCharacter,
-                location: 0.AsIndexToRange(),
+                location: 0,
                 messageArgs: identifierSpan[0]);
         }
 
         List<char>? invalidCharacters = null;
-        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
+        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
         for (var position = 1; position < identifierSpan.Length; ++position)
         {
             char currentCharacter = identifierSpan[position];
@@ -81,13 +81,13 @@ public readonly partial struct DpkgPackageName : IIdentifier<DpkgPackageName>
                 if (invalidCharacters is null)
                 {
                     invalidCharacters = [ currentCharacter ];
-                    invalidCharacterLocations = ImmutableList.CreateBuilder<Range>();
+                    invalidCharacterLocations = ImmutableList.CreateBuilder<Location>();
                 }
                 else if (!invalidCharacters.Contains(currentCharacter))
                 {
                     invalidCharacters.Add(currentCharacter);
                 }
-                invalidCharacterLocations!.Add(position.AsIndexToRange());
+                invalidCharacterLocations!.Add(new Location(position));
             }
         }
 

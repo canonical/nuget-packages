@@ -45,7 +45,7 @@ public sealed class AptSeriesTests
 
         var annotation = Assert.Single(annotations);
         Assert.Equal(expected: "APT-SERIES-001", actual: annotation.Identifier);
-        Assert.Equal(expected: [0..0], actual: annotation.Locations);
+        Assert.Equal(expected: [ new Location(0) ], actual: annotation.Locations);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class AptSeriesTests
 
         var annotation = Assert.Single(annotations);
         Assert.Equal(expected: "APT-SERIES-002", actual: annotation.Identifier);
-        Assert.Equal(expected: [1..2, 3..4], actual: annotation.Locations);
+        Assert.Equal(expected: [new Location(1), new Location(3)], actual: annotation.Locations);
     }
 
     [Fact]

@@ -49,7 +49,7 @@ public record ParsingAnnotation(
     string Title,
     string? Description,
     string Message,
-    IImmutableList<Range> Locations,
+    IImmutableList<Location> Locations,
     Uri? HelpLink)
 {
     public override string ToString()
@@ -70,7 +70,7 @@ public record ParsingAnnotation(
 
         if (Locations.Count > 0)
         {
-            value.Append(" (at ").AppendJoin(", ", Locations.Select(l => l.ToLocationString())).Append(')');
+            value.Append(" (at ").AppendJoin(", ", Locations.Select(l => l.ToString())).Append(')');
         }
 
         value.Append(": ").Append(Message);
@@ -96,13 +96,13 @@ public record ParsingAnnotation(
             Title: descriptor.Title,
             Description: descriptor.Description,
             Message: descriptor.MessageFormat,
-            Locations: ImmutableList<Range>.Empty,
+            Locations: ImmutableList<Location>.Empty,
             HelpLink: descriptor.HelpLink);
     }
 
     public static ParsingAnnotation Create(
         ParsingAnnotationDescriptor descriptor,
-        Range location)
+        Location location)
     {
         return new ParsingAnnotation(
             Identifier: descriptor.Identifier,
@@ -115,7 +115,7 @@ public record ParsingAnnotation(
 
     public static ParsingAnnotation Create(
         ParsingAnnotationDescriptor descriptor,
-        IImmutableList<Range> locations)
+        IImmutableList<Location> locations)
     {
         return new ParsingAnnotation(
             Identifier: descriptor.Identifier,
@@ -135,13 +135,13 @@ public record ParsingAnnotation(
             Title: descriptor.Title,
             Description: descriptor.Description,
             Message: string.Format(descriptor.MessageFormat, messageArgs),
-            Locations: ImmutableList<Range>.Empty,
+            Locations: ImmutableList<Location>.Empty,
             HelpLink: descriptor.HelpLink);
     }
 
     public static ParsingAnnotation Create(
         ParsingAnnotationDescriptor descriptor,
-        Range location,
+        Location location,
         params ReadOnlySpan<object?> messageArgs)
     {
         return new ParsingAnnotation(
@@ -155,7 +155,7 @@ public record ParsingAnnotation(
 
     public static ParsingAnnotation Create(
         ParsingAnnotationDescriptor descriptor,
-        IImmutableList<Range> locations,
+        IImmutableList<Location> locations,
         params ReadOnlySpan<object?> messageArgs)
     {
         return new ParsingAnnotation(

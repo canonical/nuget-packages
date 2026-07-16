@@ -211,7 +211,7 @@ public partial class DpkgVersion :
             goto fail;
         }
 
-        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
+        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
         isValid &= TryParseUpstreamVersionAndRevision(
             versionSpan,
             upstreamVersionOffset,
@@ -311,7 +311,7 @@ public partial class DpkgVersion :
         var epochValueTooLarge = false;
 
         List<char>? invalidCharacters = null;
-        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
+        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
         ulong value = 0ul;
         for (var position = 0; position < epochDelimiterIndex; ++position)
         {
@@ -335,13 +335,13 @@ public partial class DpkgVersion :
                 if (invalidCharacters is null)
                 {
                     invalidCharacters = [currentCharacter];
-                    invalidCharacterLocations = ImmutableList.CreateBuilder<Range>();
+                    invalidCharacterLocations = ImmutableList.CreateBuilder<Location>();
                 }
                 else if (!invalidCharacters.Contains(currentCharacter))
                 {
                     invalidCharacters.Add(currentCharacter);
                 }
-                invalidCharacterLocations!.Add(position.AsIndexToRange());
+                invalidCharacterLocations!.Add(position);
             }
         }
 
@@ -354,7 +354,7 @@ public partial class DpkgVersion :
         else if (epochValueTooLarge)
         {
             annotations += ParsingAnnotation.Create(EpochValueTooLarge,
-                locations: [ epochSpan.GetRange() ],
+                locations: [ epochSpan.ToLocation() ],
                 messageArgs: epochSpan.ToString());
         }
         else
@@ -372,7 +372,7 @@ public partial class DpkgVersion :
         out int revisionOffset,
         out ReadOnlySpan<char> revisionSpan,
         ref ImmutableList<ParsingAnnotation> annotations,
-        ref ImmutableList<Range>.Builder? invalidCharacterLocations,
+        ref ImmutableList<Location>.Builder? invalidCharacterLocations,
         bool failFast)
     {
         var revisionDelimiterIndex = versionSpan.LastIndexOf(REVISION_DELIMITER);
@@ -435,7 +435,7 @@ public partial class DpkgVersion :
         out bool containsDelimiter,
         out ReadOnlySpan<char> firstPartSpan,
         out ReadOnlySpan<char> secondPartSpan,
-        ref ImmutableList<Range>.Builder? locations,
+        ref ImmutableList<Location>.Builder? locations,
         bool failFast)
     {
         if (span.IsEmpty)
@@ -448,7 +448,7 @@ public partial class DpkgVersion :
 
             if (failFast) return false;
             annotations += ParsingAnnotation.Create(emptySpanDescriptor,
-                location: spanStartOffset.AsIndexToRange());
+                location: spanStartOffset);
             return false;
         }
 
@@ -476,7 +476,7 @@ public partial class DpkgVersion :
             }
 
             annotations += ParsingAnnotation.Create(emptyFirstPartDescriptor,
-                location: spanStartOffset.AsIndexToRange(),
+                location: spanStartOffset,
                 messageArgs: [ span.ToString() ]);
         }
 
@@ -489,7 +489,7 @@ public partial class DpkgVersion :
             }
 
             annotations += ParsingAnnotation.Create(emptySecondPartDescriptor,
-                location: (secondPartOffset + spanStartOffset).AsIndexToRange(),
+                location: secondPartOffset + spanStartOffset,
                 messageArgs: [ span.ToString() ]);
 
             return isValid;
@@ -504,9 +504,9 @@ public partial class DpkgVersion :
                 if (++delimiterPosition < delimiter.Length) continue;
                 if (failFast && !allowMultipleDelimiter) return false;
 
-                locations ??= ImmutableList.CreateBuilder<Range>();
+                locations ??= ImmutableList.CreateBuilder<Location>();
                 var end = secondPartOffset + position + 1;
-                locations.Add(new Range(start: end - delimiter.Length, end));
+                locations.Add(new Location(start: end - delimiter.Length, end));
             }
 
             delimiterPosition = 0;
@@ -514,7 +514,7 @@ public partial class DpkgVersion :
 
         if (locations is { Count: > 0 })
         {
-            locations.Insert(0, new Range(start: secondPartOffset - delimiter.Length, end: secondPartOffset));
+            locations.Insert(0, new Location(start: secondPartOffset - delimiter.Length, end: secondPartOffset));
             annotations += ParsingAnnotation.Create(multipleDelimiterDescriptor,
                 locations: locations.ToImmutableList(),
                 messageArgs: [ secondPartSpan.ToString() ]);
@@ -534,13 +534,13 @@ public partial class DpkgVersion :
         bool failFast,
         ref ImmutableList<ParsingAnnotation> annotations,
         ref List<char>? invalidCharacters,
-        ref ImmutableList<Range>.Builder? invalidCharacterLocations)
+        ref ImmutableList<Location>.Builder? invalidCharacterLocations)
     {
         if (span.IsEmpty)
         {
             if (failFast) return false;
             annotations += ParsingAnnotation.Create(emptyDescriptor,
-                location: spanStartOffset.AsIndexToRange());
+                location: spanStartOffset);
             return false;
         }
 
@@ -555,13 +555,13 @@ public partial class DpkgVersion :
                 if (invalidCharacters is null)
                 {
                     invalidCharacters = [currentCharacter];
-                    invalidCharacterLocations ??= ImmutableList.CreateBuilder<Range>();
+                    invalidCharacterLocations ??= ImmutableList.CreateBuilder<Location>();
                 }
                 else if (!invalidCharacters.Contains(currentCharacter))
                 {
                     invalidCharacters.Add(currentCharacter);
                 }
-                invalidCharacterLocations!.Add((position + spanStartOffset).AsIndexToRange());
+                invalidCharacterLocations!.Add(new Location(position + spanStartOffset));
             }
         }
 

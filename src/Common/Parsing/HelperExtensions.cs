@@ -14,6 +14,7 @@
 // program.  If not, see http://www.gnu.org/licenses/.
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Canonical.Common.Parsing;
 
@@ -25,38 +26,32 @@ public static class HelperExtensions
         {
             return annotations.Add(annotation);
         }
+
+        public static ImmutableList<ParsingAnnotation> operator +(ImmutableList<ParsingAnnotation> a, ImmutableList<ParsingAnnotation> b)
+        {
+            if (a.IsEmpty) return b;
+            if (b.IsEmpty) return a;
+            return [..a, ..b];
+        }
     }
 
-    /// <summary>
-    /// Converts an index (represented by an <see langword="int"/>) to a <see cref="Range"/>.
-    /// </summary>
-    /// <param name="index">The index/position (represented by an <see langword="int"/>) within an array/span.</param>
-    /// <returns>The range of the index.</returns>
-    public static Range AsIndexToRange(this int index) => new(start: index, end: index + 1);
-
-    extension(Range location)
+    extension(IEnumerable<ParsingAnnotation> annotations)
     {
-        public string ToLocationString()
-        {
-            if (location.Start.Equals(location.End) || location.End.Value == location.Start.Value + 1)
+        public IEnumerable<ParsingAnnotation> OffsetLocations(int offset) =>
+            annotations.Select(annotation => annotation with
             {
-                return location.Start.ToString();
-            }
-
-            return $"{location.Start.Value}..{location.End.Value}";
-        }
+                Locations = [.. annotation.Locations.Select(location => location.Offset(offset))],
+            });
     }
 
     extension(ReadOnlySpan<char> span)
     {
-        public Range GetRange()
-        {
-            return new Range(start: 0, end: span.Length);
-        }
+        public Location ToLocation() => new Location(start: 0, end: span.Length);
     }
 
     extension(IEnumerable<char> characters)
     {
-        public string JoinAsCharacterLiteralList() => string.Join(", ", characters.Select(c => $"'{c}'"));
+        public string JoinAsCharacterLiteralList(string separator = ", ") =>
+            string.Join(separator, characters.Select(c => $"'{c}'"));
     }
 }

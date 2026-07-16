@@ -50,12 +50,12 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
             if (failFast) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: EmptyName,
-                location: identifierSpan.GetRange());
+                location: identifierSpan.ToLocation());
             goto abort;
         }
 
         List<char>? invalidCharacters = null;
-        ImmutableList<Range>.Builder? invalidCharacterLocations = null;
+        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
 
         for (var position = 0; position < identifierSpan.Length; ++position)
         {
@@ -68,14 +68,14 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
                 if (invalidCharacters is null)
                 {
                     invalidCharacters = [currentCharacter];
-                    invalidCharacterLocations = ImmutableList.CreateBuilder<Range>();
+                    invalidCharacterLocations = ImmutableList.CreateBuilder<Location>();
                 }
                 else if (!invalidCharacters.Contains(currentCharacter))
                 {
                     invalidCharacters.Add(currentCharacter);
                 }
 
-                invalidCharacterLocations!.Add(position.AsIndexToRange());
+                invalidCharacterLocations!.Add(position);
             }
         }
 

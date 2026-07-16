@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
+using Canonical.Common.Parsing;
 using Xunit.Abstractions;
 
 namespace Canonical.Dpkg.UnitTests;
@@ -253,7 +254,7 @@ public class DpkgVersionTests
         Assert.False(success);
         var annotation = Assert.Single(annotations);
         Assert.Equal("DPKG-VERSION-011", annotation.Identifier);
-        Assert.Equal(3..4, Assert.Single(annotation.Locations));
+        Assert.Equal(new Location(3), Assert.Single(annotation.Locations));
     }
 
     [Fact]
@@ -264,7 +265,7 @@ public class DpkgVersionTests
         Assert.False(success);
         var annotation = Assert.Single(annotations);
         Assert.Equal("DPKG-VERSION-003", annotation.Identifier);
-        Assert.Equal(0..1, Assert.Single(annotation.Locations));
+        Assert.Equal(new Location(0), Assert.Single(annotation.Locations));
     }
 
     [Fact]

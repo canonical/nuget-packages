@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
+using Canonical.Common.Parsing;
+
 namespace Canonical.Dpkg.UnitTests;
 
 public class DpkgPackageNameUnitTests
@@ -208,7 +210,7 @@ public class DpkgPackageNameUnitTests
         Assert.False(success);
         var annotation = Assert.Single(annotations);
         Assert.Equal(expected: "DPKG-NAME-003", actual: annotation.Identifier);
-        Assert.Equal(expected: [1..2, 3..4], actual: annotation.Locations);
+        Assert.Equal(expected: [new Location(1), new Location(3)], actual: annotation.Locations);
     }
 
     [Fact]
@@ -218,7 +220,7 @@ public class DpkgPackageNameUnitTests
             () => DpkgPackageName.Parse("-foo".AsSpan()));
 
         var annotation = Assert.Single(exception.Annotations);
-        Assert.Equal(expected: 0..1, actual: Assert.Single(annotation.Locations));
+        Assert.Equal(expected: new Location(0), actual: Assert.Single(annotation.Locations));
     }
 
     #endregion
