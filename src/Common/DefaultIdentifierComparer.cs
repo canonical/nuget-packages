@@ -44,7 +44,7 @@ public sealed class IdentifierComparer :
             while ((i < x.Length && !char.IsAsciiDigit(x[i])) ||
                    (j < y.Length && !char.IsAsciiDigit(y[j])))
             {
-                int weight = x[i] - y[i];
+                int weight = GetCharacterWeight(x, i) - GetCharacterWeight(y, j);
                 if (weight != 0) return weight;
 
                 i++;
@@ -81,6 +81,20 @@ public sealed class IdentifierComparer :
         }
 
         return x.CompareTo(y, StringComparison.Ordinal);
+
+        static int GetCharacterWeight(ReadOnlySpan<char> value, int index)
+        {
+            if (index >= value.Length) return 0;
+
+            char character = value[index];
+
+            if (char.IsAsciiDigit(character))
+                return 0;
+            if (char.IsAsciiLetter(character))
+                return character;
+
+            return character + 256;
+        }
     }
 
     public int Compare(string? x, string? y)

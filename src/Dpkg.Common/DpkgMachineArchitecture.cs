@@ -25,24 +25,6 @@ namespace Canonical.Dpkg;
 /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#architecture"/>
 public readonly partial struct DpkgMachineArchitecture : IIdentifier<DpkgMachineArchitecture>
 {
-    /// <summary>
-    /// A special wildcard architecture specification string that matches all Debian machine architectures and is the most frequently used.
-    /// </summary>
-    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#architecture"/>
-    public static readonly DpkgMachineArchitecture Any = new DpkgMachineArchitecture("any");
-
-    /// <summary>
-    /// A special architecture specification string that indicates a source package.
-    /// </summary>
-    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#architecture"/>
-    public static readonly DpkgMachineArchitecture Source = new DpkgMachineArchitecture("source");
-
-    /// <summary>
-    /// A special architecture specification string that indicates an architecture-independent package.
-    /// </summary>
-    /// <seealso href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#architecture"/>
-    public static readonly DpkgMachineArchitecture All = new DpkgMachineArchitecture("all");
-
     public static bool TryParse(
         ReadOnlySpan<char> identifierSpan,
         out DpkgMachineArchitecture identifier,
