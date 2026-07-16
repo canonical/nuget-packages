@@ -124,7 +124,7 @@ public sealed class IdentifierSourceGenerator : IIncrementalGenerator
 
             """);
 
-        AppendConstructor(sourceText, typeName);
+        AppendConstructor(sourceText, typeSymbol);
         AppendDeconstructMethod(sourceText);
         AppendGetHashCode(sourceText);
         AppendToString(sourceText);
@@ -178,22 +178,54 @@ public sealed class IdentifierSourceGenerator : IIncrementalGenerator
 
     }
 
-    private static void AppendConstructor(StringBuilder sourceText, string typeName)
+    private static void AppendConstructor(StringBuilder sourceText, INamedTypeSymbol typeSymbol)
     {
+        string typeName = typeSymbol.Name;
+
+        var constructors = typeSymbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(static m => m is { IsImplicitlyDeclared: false, MethodKind: MethodKind.Constructor });
+
+        // ReSharper disable once PossibleMultipleEnumeration
+        bool hasParameterlessConstructor = constructors.Any(static c => c.Parameters.IsEmpty);
+        // ReSharper disable once PossibleMultipleEnumeration
+        bool hasCustomConstructors = constructors.Any(static c => !c.Parameters.IsEmpty);
+
         sourceText.Append(
-            $$"""
+            """
                 private readonly string _identifier;
 
-                public {{typeName}}()
-                {
-                    _identifier = string.Empty;
-                }
 
-                private {{typeName}}(string identifier)
-                {
-                    _identifier = identifier;
-                }
+            """);
 
+        if (!hasParameterlessConstructor)
+        {
+            sourceText.Append(
+                $$"""
+                    public {{typeName}}()
+                    {
+                        _identifier = string.Empty;
+                    }
+
+
+                """);
+        }
+
+        if (!hasCustomConstructors)
+        {
+            sourceText.Append(
+                $$"""
+                    internal {{typeName}}(string identifier)
+                    {
+                        _identifier = identifier;
+                    }
+
+
+                """);
+        }
+
+        sourceText.Append(
+            """
                 [global::System.Diagnostics.Contracts.PureAttribute]
                 public string Identifier => _identifier;
 
