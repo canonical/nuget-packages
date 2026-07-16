@@ -191,13 +191,6 @@ public sealed class IdentifierSourceGenerator : IIncrementalGenerator
         // ReSharper disable once PossibleMultipleEnumeration
         bool hasCustomConstructors = constructors.Any(static c => !c.Parameters.IsEmpty);
 
-        sourceText.Append(
-            """
-                private readonly string _identifier;
-
-
-            """);
-
         if (!hasParameterlessConstructor)
         {
             sourceText.Append(
@@ -219,6 +212,8 @@ public sealed class IdentifierSourceGenerator : IIncrementalGenerator
                     {
                         _identifier = identifier;
                     }
+
+                    private readonly string _identifier;
 
 
                 """);

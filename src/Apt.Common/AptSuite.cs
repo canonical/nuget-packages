@@ -15,6 +15,7 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
 using Canonical.Common;
 using Canonical.Common.Parsing;
 
@@ -22,11 +23,32 @@ namespace Canonical.Apt;
 
 public readonly partial struct AptSuite : IIdentifier<AptSuite>, IFormattable
 {
+    // because of CS0282 we need to define all fields in one place
+    private readonly string _identifier;
+    public readonly AptSeries Series;
+    public readonly AptPocket Pocket;
+
     public AptSuite()
     {
         _identifier = "";
         Series = new AptSeries();
         Pocket = AptPocket.Release;
+    }
+
+    public AptSuite(AptSeries series)
+    {
+        _identifier = series.Identifier;
+        Series = series;
+        Pocket = AptPocket.Release;
+    }
+
+    public AptSuite(AptSeries series, AptPocket pocket)
+    {
+        _identifier = pocket == AptPocket.Release
+            ? series.Identifier
+            : $"{series}-{pocket}";
+        Series = series;
+        Pocket = pocket;
     }
 
     internal AptSuite(string identifier, AptSeries series, AptPocket pocket)
@@ -43,10 +65,6 @@ public readonly partial struct AptSuite : IIdentifier<AptSuite>, IFormattable
         series = Series;
         pocket = Pocket;
     }
-
-    public AptSeries Series { get; }
-
-    public AptPocket Pocket { get; }
 
     public string ToString(string? format, IFormatProvider? formatProvider) => format switch
     {
