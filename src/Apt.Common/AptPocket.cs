@@ -48,9 +48,18 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
                 messageArgs: identifierSpan[0]);
         }
 
+        if (!char.IsAsciiLetterLower(identifierSpan[^1]))
+        {
+            if (failFast) goto abort;
+            annotations += ParsingAnnotation.Create(
+                descriptor: InvalidEndCharacter,
+                location: identifierSpan.Length - 1,
+                messageArgs: identifierSpan[^1]);
+        }
+
         List<char>? invalidCharacters = null;
         ImmutableList<Location>.Builder? invalidCharacterLocations = null;
-        for (var position = 1; position < identifierSpan.Length; ++position)
+        for (var position = 0; position < identifierSpan.Length; ++position)
         {
             char currentCharacter = identifierSpan[position];
 
@@ -79,12 +88,6 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
                 messageArgs: invalidCharacters.JoinAsCharacterLiteralList());
         }
 
-        if (identifierSpan[^1] == '-')
-        {
-            annotations += ParsingAnnotation.Create(InvalidEndCharacter,
-                locations: [new Location(identifierSpan.Length - 1)]);
-        }
-
         if (!annotations.IsEmpty) goto abort;
 
         identifier = new AptPocket(identifierSpan.ToString());
@@ -109,8 +112,8 @@ abort:
 
     private static readonly ParsingAnnotationDescriptor InvalidEndCharacter = new (
         Identifier: "APT-POCKET-003",
-        Title: "Invalid start character",
-        MessageFormat: "Pocket name can not end with the character '-'.",
+        Title: "Invalid end character",
+        MessageFormat: "Pocket name can not end with the character '{0}'.",
         Description: "Pocket names must end with a lowercase letter (a-z).");
 
     private static partial ParsingException CreateParsingException(
