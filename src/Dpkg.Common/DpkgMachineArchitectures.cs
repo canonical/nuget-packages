@@ -54,6 +54,7 @@ public static class DpkgMachineArchitectures
     public static readonly DpkgMachineArchitecture x32 = new("x32");
     public static readonly DpkgMachineArchitecture alpha = new("alpha");
     public static readonly DpkgMachineArchitecture amd64 = new("amd64");
+    public static readonly DpkgMachineArchitecture amd64v3 = new("amd64v3");
     public static readonly DpkgMachineArchitecture arc = new("arc");
     public static readonly DpkgMachineArchitecture armeb = new("armeb");
     public static readonly DpkgMachineArchitecture arm = new("arm");
@@ -98,6 +99,7 @@ public static class DpkgMachineArchitectures
         x32,
         alpha,
         amd64,
+        amd64v3,
         arc,
         armeb,
         arm,
