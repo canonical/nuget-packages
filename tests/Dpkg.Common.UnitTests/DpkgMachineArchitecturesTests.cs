@@ -22,4 +22,57 @@ public class DpkgMachineArchitecturesTests
     {
         Assert.NotEmpty(DpkgMachineArchitectures.WellKnown);
     }
+
+    [Fact]
+    public void TryParse_WithValidArch_ReturnsTrueAndIdentifier()
+    {
+        var success = DpkgMachineArchitecture.TryParse("amd64", out var result, out var annotations, failFast: false);
+
+        Assert.True(success);
+        Assert.Equal(expected: "amd64", actual: result.Identifier);
+        Assert.Empty(annotations);
+    }
+
+    [Fact]
+    public void TryParse_WellKnown_ReturnsTrueAndIdentifier()
+    {
+        foreach (var arch in DpkgMachineArchitectures.WellKnown)
+        {
+            var identifier = arch.Identifier;
+
+            var success = DpkgMachineArchitecture.TryParse(identifier, out var result, out var annotations, failFast: false);
+
+            Assert.True(success);
+            Assert.Equal(expected: identifier, actual: result.Identifier);
+            Assert.True(ReferenceEquals(identifier, result.Identifier), identifier);
+            Assert.Empty(annotations);
+        }
+    }
+
+    [Theory]
+    [InlineData("foo")]
+    [InlineData("foobar")]
+    [InlineData("foobar1")]
+    [InlineData("1234")]
+    [InlineData("12345")]
+    [InlineData("12345678")]
+    public void TryParse_Unknown_ReturnsTrueAndIdentifier(string unknownIdentifier)
+    {
+        var success = DpkgMachineArchitecture.TryParse(unknownIdentifier, out var result, out var annotations, failFast: false);
+
+        Assert.DoesNotContain(result, DpkgMachineArchitectures.WellKnown);
+        Assert.True(success);
+        Assert.Equal(expected: unknownIdentifier, actual: result.Identifier);
+        Assert.Empty(annotations);
+    }
+
+    [Fact]
+    public void TryParse_Empty_ReturnsFalse()
+    {
+        var success = DpkgMachineArchitecture.TryParse(string.Empty, out var result, out var annotations, failFast: false);
+
+        Assert.False(success);
+        Assert.Equal(expected: string.Empty, actual: result.Identifier);
+        Assert.NotEmpty(annotations);
+    }
 }
