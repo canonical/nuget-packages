@@ -23,6 +23,12 @@ program.  If not, see http://www.gnu.org/licenses/.
     <Project Path="src/Apt.Common/Apt.Common.csproj" />
     <Project Path="tests/Apt.Common.UnitTests/Apt.Common.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/DistroInfo/">
+    <Project Path="src/DistroInfo.Data.SourceGeneration/DistroInfo.Data.SourceGeneration.csproj" />
+    <Project Path="src/DistroInfo.Debian/DistroInfo.Debian.csproj" />
+    <Project Path="src/DistroInfo.Ubuntu/DistroInfo.Ubuntu.csproj" />
+    <Project Path="tests/DistroInfo.UnitTests/DistroInfo.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Madison/">
     <Project Path="src/Madison/Madison.csproj" />
     <Project Path="tests/Madison.UnitTests/Madison.UnitTests.csproj" />
