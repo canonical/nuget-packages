@@ -26,7 +26,7 @@ public class DpkgMachineArchitecturesTests
     [Fact]
     public void TryParse_WithValidArch_ReturnsTrueAndIdentifier()
     {
-        var success = DpkgMachineArchitecture.TryParse("amd64", out var result, out var annotations, failFast: false);
+        var success = DpkgMachineArchitecture.TryParse("amd64", out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "amd64", actual: result.Identifier);
@@ -40,7 +40,7 @@ public class DpkgMachineArchitecturesTests
         {
             var identifier = arch.Identifier;
 
-            var success = DpkgMachineArchitecture.TryParse(identifier, out var result, out var annotations, failFast: false);
+            var success = DpkgMachineArchitecture.TryParse(identifier, out var result, out var annotations, failEarly: false);
 
             Assert.True(success);
             Assert.Equal(expected: identifier, actual: result.Identifier);
@@ -58,7 +58,7 @@ public class DpkgMachineArchitecturesTests
     [InlineData("12345678")]
     public void TryParse_Unknown_ReturnsTrueAndIdentifier(string unknownIdentifier)
     {
-        var success = DpkgMachineArchitecture.TryParse(unknownIdentifier, out var result, out var annotations, failFast: false);
+        var success = DpkgMachineArchitecture.TryParse(unknownIdentifier, out var result, out var annotations, failEarly: false);
 
         Assert.DoesNotContain(result, DpkgMachineArchitectures.WellKnown);
         Assert.True(success);
@@ -69,7 +69,7 @@ public class DpkgMachineArchitecturesTests
     [Fact]
     public void TryParse_Empty_ReturnsFalse()
     {
-        var success = DpkgMachineArchitecture.TryParse(string.Empty, out var result, out var annotations, failFast: false);
+        var success = DpkgMachineArchitecture.TryParse(string.Empty, out var result, out var annotations, failEarly: false);
 
         Assert.False(success);
         Assert.Equal(expected: string.Empty, actual: result.Identifier);

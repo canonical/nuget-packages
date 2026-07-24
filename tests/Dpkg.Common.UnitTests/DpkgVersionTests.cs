@@ -52,9 +52,57 @@ public class DpkgVersionTests
 
     [Theory]
     [InlineData("a:1")]
+    [InlineData(":1")]
+    [InlineData("1:")]
+    [InlineData("1:-")]
+    [InlineData("1:-ubuntu1")]
+    [InlineData("1:-0")]
+    [InlineData("1:-0ubuntu1")]
+    [InlineData("1-0übuntö1")]
     public void Parsing_InvalidVersionString_Fails(string invalidVersionString)
     {
-        Assert.False(DpkgVersion.TryParse(invalidVersionString, formatProvider: null, out _));
+        {
+            Assert.False(DpkgVersion.TryParse(invalidVersionString, out _, out var annotations, failEarly: false));
+            Assert.NotEmpty(annotations);
+        }
+        {
+            Assert.False(DpkgVersion.TryParse(invalidVersionString, out _, out var annotations, failEarly: true));
+            Assert.Empty(annotations);
+        }
+    }
+
+    [Fact]
+    public void Parsing_EmptyUbuntuRevisionAndNotAllowEmpty_Fails()
+    {
+        var versionString = "1-0ubuntu";
+        var options = DpkgVersionOptions.None;
+
+        {
+            Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: false));
+            Assert.True(Assert.Single(annotations).Identifier == "DPKG-VERSION-014");
+        }
+        {
+            Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: true));
+            Assert.Empty(annotations);
+        }
+    }
+
+    [Theory]
+    [InlineData("1-0ubuntu", "DPKG-VERSION-014")]
+    [InlineData("1-ubuntu1", "DPKG-VERSION-013")]
+    public void Parsing_EmptyDebianRevisionAndNotAllowEmpty_Fails(string versionString, string annotationIdentifier)
+    {
+        var options = DpkgVersionOptions.None;
+
+        {
+            Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: false));
+            var annotation = Assert.Single(annotations);
+            Assert.Equal(expected: annotationIdentifier, actual: annotation.Identifier);
+        }
+        {
+            Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: true));
+            Assert.Empty(annotations);
+        }
     }
 
     [Theory]

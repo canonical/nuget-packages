@@ -31,7 +31,7 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
     /// <param name="identifierSpan">The string representation of the apt series name.</param>
     /// <param name="result">Will contain the parsed and validated apt series name.</param>
     /// <param name="annotations">Will contain additional context regarding the parsed result.</param>
-    /// <param name="failFast">
+    /// <param name="failEarly">
     /// <see langword="true"/> to abort parsing as soon as the first error gets detected.
     /// <paramref name="annotations"/> will be empty; <see langword="false"/> to process
     /// the entire value of <paramref name="identifierSpan"/>.
@@ -41,13 +41,13 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
         ReadOnlySpan<char> identifierSpan,
         out AptSeries result,
         out ImmutableList<ParsingAnnotation> annotations,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
         if (identifierSpan.Length < 1)
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: EmptyName,
                 location: identifierSpan.ToLocation());
@@ -63,7 +63,7 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
 
             if (!char.IsAsciiLetterLower(currentCharacter))
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
 
                 if (invalidCharacters is null)
                 {

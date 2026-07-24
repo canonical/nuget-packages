@@ -23,7 +23,7 @@ public class AptComponentTests
     [InlineData("universe")]
     public void TryParse_WithValidName_ReturnsTrueAndIdentifier(string validComponentName)
     {
-        var success = AptComponent.TryParse(validComponentName, out var result, out var annotations, failFast: false);
+        var success = AptComponent.TryParse(validComponentName, out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: validComponentName, actual: result.Identifier);
@@ -38,7 +38,7 @@ public class AptComponentTests
     [InlineData("non free")]
     public void TryParse_WithInvalidName_ReturnsFalseAndEmptyIdentifier(string invalidComponentName)
     {
-        var success = AptComponent.TryParse(invalidComponentName, out var result, out var annotations, failFast: false);
+        var success = AptComponent.TryParse(invalidComponentName, out var result, out var annotations, failEarly: false);
 
         Assert.False(success);
         Assert.Equal(expected: string.Empty, actual: result.Identifier);

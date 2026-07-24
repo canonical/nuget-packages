@@ -25,13 +25,13 @@ public readonly partial struct AptComponent : IIdentifier<AptComponent>
         ReadOnlySpan<char> identifierSpan,
         out AptComponent identifier,
         out ImmutableList<ParsingAnnotation> annotations,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
         if (identifierSpan.Length == 0)
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: EmptyName,
                 location: identifierSpan.ToLocation());
@@ -40,7 +40,7 @@ public readonly partial struct AptComponent : IIdentifier<AptComponent>
 
         if (!char.IsAsciiLetterLower(identifierSpan[0]))
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidStartCharacter,
                 location: 0,
@@ -49,7 +49,7 @@ public readonly partial struct AptComponent : IIdentifier<AptComponent>
 
         if (!char.IsAsciiLetterLower(identifierSpan[^1]))
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidEndCharacter,
                 location: identifierSpan.Length - 1,
@@ -65,7 +65,7 @@ public readonly partial struct AptComponent : IIdentifier<AptComponent>
             if (!char.IsAsciiLetterLower(currentCharacter)
                 && currentCharacter != '-')
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
 
                 if (invalidCharacters is null)
                 {

@@ -29,7 +29,7 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
         ReadOnlySpan<char> identifierSpan,
         out AptPocket identifier,
         out ImmutableList<ParsingAnnotation> annotations,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
@@ -41,7 +41,7 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
 
         if (!char.IsAsciiLetterLower(identifierSpan[0]))
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidStartCharacter,
                 location: 0,
@@ -50,7 +50,7 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
 
         if (!char.IsAsciiLetterLower(identifierSpan[^1]))
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: InvalidEndCharacter,
                 location: identifierSpan.Length - 1,
@@ -66,7 +66,7 @@ public readonly partial struct AptPocket : IIdentifier<AptPocket>, IFormattable
             if (!char.IsAsciiLetterLower(currentCharacter)
                 && currentCharacter != '-')
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
 
                 if (invalidCharacters is null)
                 {

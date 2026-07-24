@@ -80,13 +80,13 @@ public readonly partial struct AptSuite : IIdentifier<AptSuite>, IFormattable
         ReadOnlySpan<char> identifierSpan,
         out AptSuite identifier,
         out ImmutableList<ParsingAnnotation> annotations,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
         if (identifierSpan.Length < 1)
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations = [ ParsingAnnotation.Create(
                 descriptor: NameEmpty,
                 location: identifierSpan.ToLocation()) ];
@@ -109,21 +109,21 @@ public readonly partial struct AptSuite : IIdentifier<AptSuite>, IFormattable
 
             if (pocketSpan.IsEmpty)
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
                 annotations = [ ParsingAnnotation.Create(
                     descriptor: EmptyPocket,
                     location: separationIndex) ];
             }
-            else if (!AptPocket.TryParse(pocketSpan, out pocket, out var pocketAnnotations, failFast))
+            else if (!AptPocket.TryParse(pocketSpan, out pocket, out var pocketAnnotations, failEarly))
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
                 annotations = [.. pocketAnnotations.OffsetLocations(offset: separationIndex)];
             }
         }
 
-        if (!AptSeries.TryParse(seriesSpan, out var series, out var seriesAnnotations, failFast))
+        if (!AptSeries.TryParse(seriesSpan, out var series, out var seriesAnnotations, failEarly))
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += seriesAnnotations;
             goto abort;
         }

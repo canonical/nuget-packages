@@ -176,13 +176,13 @@ public class DpkgPackageNameUnitTests
 
     #endregion
 
-    #region TryParse(ReadOnlySpan<char>, out, out annotations, failFast)
+    #region TryParse(ReadOnlySpan<char>, out, out annotations, failEarly)
 
     [Fact]
-    public void TryParse_WithFailFastAndInvalidName_AbortsWithoutAnnotations()
+    public void TryParse_WithfailEarlyAndInvalidName_AbortsWithoutAnnotations()
     {
         var success = DpkgPackageName.TryParse(
-            "a_b_c".AsSpan(), out var result, out var annotations, failFast: true);
+            "a_b_c".AsSpan(), out var result, out var annotations, failEarly: true);
 
         Assert.False(success);
         Assert.Equal(expected: string.Empty, actual: result.Identifier);
@@ -190,10 +190,10 @@ public class DpkgPackageNameUnitTests
     }
 
     [Fact]
-    public void TryParse_WithoutFailFastAndValidName_ReturnsTrueWithoutAnnotations()
+    public void TryParse_WithoutfailEarlyAndValidName_ReturnsTrueWithoutAnnotations()
     {
         var success = DpkgPackageName.TryParse(
-            "dotnet8".AsSpan(), out var result, out var annotations, failFast: false);
+            "dotnet8".AsSpan(), out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "dotnet8", actual: result.Identifier);
@@ -201,11 +201,11 @@ public class DpkgPackageNameUnitTests
     }
 
     [Fact]
-    public void TryParse_WithoutFailFast_CollectsAllInvalidCharacterLocations()
+    public void TryParse_WithoutfailEarly_CollectsAllInvalidCharacterLocations()
     {
         // "a_b_c" has invalid characters at positions 1 and 3.
         var success = DpkgPackageName.TryParse(
-            "a_b_c".AsSpan(), out _, out var annotations, failFast: false);
+            "a_b_c".AsSpan(), out _, out var annotations, failEarly: false);
 
         Assert.False(success);
         var annotation = Assert.Single(annotations);

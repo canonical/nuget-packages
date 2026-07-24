@@ -28,7 +28,7 @@ public class AptSuiteTests
     [InlineData("noble1-proposed1-")]
     public void TryParse_WithInvalid_Fails(string suite)
     {
-        var success = AptSuite.TryParse(suite, out var result, out var annotations, failFast: false);
+        var success = AptSuite.TryParse(suite, out var result, out var annotations, failEarly: false);
 
         Assert.False(success);
         Assert.Equal(expected: string.Empty, actual: result.Identifier);
@@ -42,7 +42,7 @@ public class AptSuiteTests
     [Fact]
     public void TryParse_WithOnlySeries_ReturnsTrueAndIdentifierAndReleasePocket()
     {
-        var success = AptSuite.TryParse("noble", out var result, out var annotations, failFast: false);
+        var success = AptSuite.TryParse("noble", out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "noble", actual: result.Identifier);
@@ -56,7 +56,7 @@ public class AptSuiteTests
     [Fact]
     public void TryParse_WithSeriesAndPocket_ReturnsTrueAndIdentifier()
     {
-        var success = AptSuite.TryParse("noble-updates", out var result, out var annotations, failFast: false);
+        var success = AptSuite.TryParse("noble-updates", out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "noble-updates", actual: result.Identifier);
@@ -69,7 +69,7 @@ public class AptSuiteTests
     [Fact]
     public void TryParse_WithMultipleDashes_ReturnsTrueAndIdentifier()
     {
-        var success = AptSuite.TryParse("bullseye-proposed-updates", out var result, out var annotations, failFast: false);
+        var success = AptSuite.TryParse("bullseye-proposed-updates", out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "bullseye-proposed-updates", actual: result.Identifier);

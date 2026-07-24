@@ -21,13 +21,13 @@ namespace Canonical.Apt.UnitTests;
 
 public sealed class AptSeriesTests
 {
-    #region TryParse(ReadOnlySpan<char>, out, out annotations, failFast)
+    #region TryParse(ReadOnlySpan<char>, out, out annotations, failEarly)
 
     [Fact]
     public void TryParse_WithValidName_ReturnsTrueAndIdentifier()
     {
         var success = AptSeries.TryParse(
-            "trixie".AsSpan(), out var result, out var annotations, failFast: false);
+            "trixie".AsSpan(), out var result, out var annotations, failEarly: false);
 
         Assert.True(success);
         Assert.Equal(expected: "trixie", actual: result.Identifier);
@@ -38,7 +38,7 @@ public sealed class AptSeriesTests
     public void TryParse_WithEmptySpan_ReturnsFalseAndEmptyAnnotation()
     {
         var success = AptSeries.TryParse(
-            ReadOnlySpan<char>.Empty, out var result, out var annotations, failFast: false);
+            ReadOnlySpan<char>.Empty, out var result, out var annotations, failEarly: false);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -49,10 +49,10 @@ public sealed class AptSeriesTests
     }
 
     [Fact]
-    public void TryParse_WithFailFastAndEmptySpan_AbortsWithoutAnnotations()
+    public void TryParse_WithfailEarlyAndEmptySpan_AbortsWithoutAnnotations()
     {
         var success = AptSeries.TryParse(
-            ReadOnlySpan<char>.Empty, out var result, out var annotations, failFast: true);
+            ReadOnlySpan<char>.Empty, out var result, out var annotations, failEarly: true);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -60,11 +60,11 @@ public sealed class AptSeriesTests
     }
 
     [Fact]
-    public void TryParse_WithoutFailFast_CollectsAllInvalidCharacterLocations()
+    public void TryParse_WithoutfailEarly_CollectsAllInvalidCharacterLocations()
     {
         // "a_b_c" has invalid characters at positions 1 and 3.
         var success = AptSeries.TryParse(
-            "a_b_c".AsSpan(), out var result, out var annotations, failFast: false);
+            "a_b_c".AsSpan(), out var result, out var annotations, failEarly: false);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -75,10 +75,10 @@ public sealed class AptSeriesTests
     }
 
     [Fact]
-    public void TryParse_WithFailFastAndInvalidCharacter_AbortsWithoutAnnotations()
+    public void TryParse_WithfailEarlyAndInvalidCharacter_AbortsWithoutAnnotations()
     {
         var success = AptSeries.TryParse(
-            "a_b".AsSpan(), out var result, out var annotations, failFast: true);
+            "a_b".AsSpan(), out var result, out var annotations, failEarly: true);
 
         Assert.False(success);
         Assert.Equal(expected: default, actual: result);
@@ -89,7 +89,7 @@ public sealed class AptSeriesTests
     public void TryParse_DistinctInvalidCharacters_ListsThemInMessage()
     {
         var success = AptSeries.TryParse(
-            "a1B".AsSpan(), out _, out var annotations, failFast: false);
+            "a1B".AsSpan(), out _, out var annotations, failEarly: false);
 
         Assert.False(success);
         var annotation = Assert.Single(annotations);

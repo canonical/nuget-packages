@@ -87,7 +87,7 @@ public partial class DpkgVersion
     {
         if (other is null) return 1;
         if (ReferenceEquals(_originalString , other)) return 0;
-        var version = Parse(other, out _, failFast: true);
+        var version = Parse(other, out _, failEarly: true);
         return CompareTo(version);
     }
 

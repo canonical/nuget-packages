@@ -379,20 +379,20 @@ public sealed class IdentifierSourceGenerator : IIncrementalGenerator
                 }
 
                 [global::System.Diagnostics.Contracts.PureAttribute]
-                public static {{typeName}} Parse(global::System.ReadOnlySpan<char> identifierSpan, bool failFast = false) =>
-                    TryParse(identifierSpan, out var identifier, out var annotations, failFast)
+                public static {{typeName}} Parse(global::System.ReadOnlySpan<char> identifierSpan, bool failEarly = false) =>
+                    TryParse(identifierSpan, out var identifier, out var annotations, failEarly)
                     ? identifier
                     : throw CreateParsingException(identifierSpan, annotations);
 
                 [global::System.Diagnostics.Contracts.PureAttribute]
-                public static {{typeName}} Parse(global::System.ReadOnlySpan<char> identifierSpan, out global::System.Collections.Immutable.ImmutableList<global::Canonical.Common.Parsing.ParsingAnnotation> annotations, bool failFast = false) =>
-                    TryParse(identifierSpan, out var identifier, out annotations, failFast)
+                public static {{typeName}} Parse(global::System.ReadOnlySpan<char> identifierSpan, out global::System.Collections.Immutable.ImmutableList<global::Canonical.Common.Parsing.ParsingAnnotation> annotations, bool failEarly = false) =>
+                    TryParse(identifierSpan, out var identifier, out annotations, failEarly)
                     ? identifier
                     : throw CreateParsingException(identifierSpan, annotations);
 
                 [global::System.Diagnostics.Contracts.PureAttribute]
                 public static bool TryParse(global::System.ReadOnlySpan<char> identifierSpan, out {{typeName}} identifier) =>
-                    TryParse(identifierSpan, out identifier, out _, failFast: true);
+                    TryParse(identifierSpan, out identifier, out _, failEarly: true);
 
 
             """);

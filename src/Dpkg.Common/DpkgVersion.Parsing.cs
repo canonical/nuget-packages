@@ -137,9 +137,9 @@ public partial class DpkgVersion :
     public static DpkgVersion Parse(
         ReadOnlySpan<char> versionSpan,
         DpkgVersionOptions options = DpkgVersionOptions.Default,
-        bool failFast = false)
+        bool failEarly = false)
     {
-        return TryParse(versionSpan, out var version, out var annotations, options, failFast)
+        return TryParse(versionSpan, out var version, out var annotations, options, failEarly)
             ? version
             : throw new MalformedDpkgVersionException(versionSpan.ToString(), annotations);
     }
@@ -149,9 +149,9 @@ public partial class DpkgVersion :
         // ReSharper disable once OutParameterValueIsAlwaysDiscarded.Global
         out ImmutableList<ParsingAnnotation> annotations,
         DpkgVersionOptions options = DpkgVersionOptions.Default,
-        bool failFast = false)
+        bool failEarly = false)
     {
-        return TryParse(versionSpan, out var version, out annotations, options, failFast)
+        return TryParse(versionSpan, out var version, out annotations, options, failEarly)
             ? version
             : throw new MalformedDpkgVersionException(versionSpan.ToString(), annotations);
     }
@@ -161,8 +161,8 @@ public partial class DpkgVersion :
         [NotNullWhen(returnValue: true)] out DpkgVersion? version,
         DpkgVersionOptions options = DpkgVersionOptions.Default)
     {
-        // It does not make sense to failFast: false, because the annotations always get discarded.
-        return TryParse(versionSpan, out version, out _, options, failFast: true);
+        // It does not make sense to failEarly: false, because the annotations always get discarded.
+        return TryParse(versionSpan, out version, out _, options, failEarly: true);
     }
 
     public static bool TryParse(
@@ -170,7 +170,7 @@ public partial class DpkgVersion :
         [NotNullWhen(returnValue: true)] out DpkgVersion? version,
         out ImmutableList<ParsingAnnotation> annotations,
         DpkgVersionOptions options = DpkgVersionOptions.Default,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
@@ -186,7 +186,7 @@ public partial class DpkgVersion :
             }
             else
             {
-                if (failFast) goto fail;
+                if (failEarly) goto fail;
                 version = null;
             }
 
@@ -200,13 +200,13 @@ public partial class DpkgVersion :
             out var epochValue,
             out var upstreamVersionOffset,
             ref annotations,
-            failFast);
+            failEarly);
 
-        if (!isValid && failFast) goto fail;
+        if (!isValid && failEarly) goto fail;
 
         if (upstreamVersionOffset >= versionSpan.Length)
         {
-            if (failFast) goto fail;
+            if (failEarly) goto fail;
             annotations += ParsingAnnotation.Create(EmptyUpstreamVersion);
             goto fail;
         }
@@ -220,9 +220,9 @@ public partial class DpkgVersion :
             out var revisionSpan,
             ref annotations,
             ref invalidCharacterLocations,
-            failFast);
+            failEarly);
 
-        if (!isValid && failFast) goto fail;
+        if (!isValid && failEarly) goto fail;
 
         isValid &= TrySplitByDelimiter(
             span: upstreamVersionSpan,
@@ -240,9 +240,9 @@ public partial class DpkgVersion :
             out var revertedUpstreamVersionSpan,
             out var realUpstreamVersionSpan,
             ref invalidCharacterLocations,
-            failFast);
+            failEarly);
 
-        if (!isValid && failFast) goto fail;
+        if (!isValid && failEarly) goto fail;
 
         isValid &= TrySplitByDelimiter(
             span: revisionSpan,
@@ -260,7 +260,7 @@ public partial class DpkgVersion :
             out var debianRevisionSpan,
             out var ubuntuRevisionSpan,
             ref invalidCharacterLocations,
-            failFast);
+            failEarly);
 
         if (isValid)
         {
@@ -287,7 +287,7 @@ public partial class DpkgVersion :
         out uint epochValue,
         out int upstreamVersionOffset,
         ref ImmutableList<ParsingAnnotation> annotations,
-        bool failFast)
+        bool failEarly)
     {
         epochValue = DEFAULT_EPOCH_VALUE;
         var epochDelimiterIndex = versionSpan.IndexOf(EPOCH_DELIMITER);
@@ -301,7 +301,7 @@ public partial class DpkgVersion :
         if (epochDelimiterIndex == 0)
         {
             epochSpan = ReadOnlySpan<char>.Empty;
-            if (failFast) return false;
+            if (failEarly) return false;
 
             annotations += ParsingAnnotation.Create(EmptyEpoch);
             return false;
@@ -324,13 +324,13 @@ public partial class DpkgVersion :
                 value = unchecked(value * 10ul + (ulong)(currentCharacter - '0'));
                 if (value > MAX_EPOCH_VALUE)
                 {
-                    if (failFast) return false;
+                    if (failEarly) return false;
                     epochValueTooLarge = true;
                 }
             }
             else
             {
-                if (failFast) return false;
+                if (failEarly) return false;
 
                 if (invalidCharacters is null)
                 {
@@ -373,7 +373,7 @@ public partial class DpkgVersion :
         out ReadOnlySpan<char> revisionSpan,
         ref ImmutableList<ParsingAnnotation> annotations,
         ref ImmutableList<Location>.Builder? invalidCharacterLocations,
-        bool failFast)
+        bool failEarly)
     {
         var revisionDelimiterIndex = versionSpan.LastIndexOf(REVISION_DELIMITER);
         List<char>? invalidCharacters = null;
@@ -397,21 +397,21 @@ public partial class DpkgVersion :
             isAllowedCharacter: IsAllowedUpstreamVersionCharacter,
             emptyDescriptor: EmptyUpstreamVersion,
             invalidCharacterDescriptor: InvalidUpstreamVersionCharacters,
-            failFast,
+            failEarly,
             annotations: ref annotations,
             invalidCharacters: ref invalidCharacters,
             invalidCharacterLocations: ref invalidCharacterLocations);
 
         if (revisionDelimiterIndex >= 0)
         {
-            if (!isValid && failFast) return false;
+            if (!isValid && failEarly) return false;
             isValid &= AllCharactersAreValid(
                 span: revisionSpan,
                 spanStartOffset: revisionOffset,
                 isAllowedCharacter: IsAllowedRevisionCharacter,
                 emptyDescriptor: EmptyRevision,
                 invalidCharacterDescriptor: InvalidRevisionCharacters,
-                failFast,
+                failEarly,
                 annotations: ref annotations,
                 invalidCharacters: ref invalidCharacters,
                 invalidCharacterLocations: ref invalidCharacterLocations);
@@ -436,7 +436,7 @@ public partial class DpkgVersion :
         out ReadOnlySpan<char> firstPartSpan,
         out ReadOnlySpan<char> secondPartSpan,
         ref ImmutableList<Location>.Builder? locations,
-        bool failFast)
+        bool failEarly)
     {
         if (span.IsEmpty)
         {
@@ -446,7 +446,7 @@ public partial class DpkgVersion :
 
             if (spanStartOffset < 0) return true;
 
-            if (failFast) return false;
+            if (failEarly) return false;
             annotations += ParsingAnnotation.Create(emptySpanDescriptor,
                 location: spanStartOffset);
             return false;
@@ -471,7 +471,7 @@ public partial class DpkgVersion :
         {
             if (!allowEmptyFirstPart)
             {
-                if (failFast) return false;
+                if (failEarly) return false;
                 isValid = false;
             }
 
@@ -484,7 +484,7 @@ public partial class DpkgVersion :
         {
             if (!allowEmptySecondPart)
             {
-                if (failFast) return false;
+                if (failEarly) return false;
                 isValid = false;
             }
 
@@ -502,7 +502,7 @@ public partial class DpkgVersion :
             if (secondPartSpan[position] == delimiter[delimiterPosition])
             {
                 if (++delimiterPosition < delimiter.Length) continue;
-                if (failFast && !allowMultipleDelimiter) return false;
+                if (failEarly && !allowMultipleDelimiter) return false;
 
                 locations ??= ImmutableList.CreateBuilder<Location>();
                 var end = secondPartOffset + position + 1;
@@ -531,14 +531,14 @@ public partial class DpkgVersion :
         Func<char, bool> isAllowedCharacter,
         ParsingAnnotationDescriptor emptyDescriptor,
         ParsingAnnotationDescriptor invalidCharacterDescriptor,
-        bool failFast,
+        bool failEarly,
         ref ImmutableList<ParsingAnnotation> annotations,
         ref List<char>? invalidCharacters,
         ref ImmutableList<Location>.Builder? invalidCharacterLocations)
     {
         if (span.IsEmpty)
         {
-            if (failFast) return false;
+            if (failEarly) return false;
             annotations += ParsingAnnotation.Create(emptyDescriptor,
                 location: spanStartOffset);
             return false;
@@ -550,7 +550,7 @@ public partial class DpkgVersion :
 
             if (!isAllowedCharacter(currentCharacter))
             {
-                if (failFast) return false;
+                if (failEarly) return false;
 
                 if (invalidCharacters is null)
                 {

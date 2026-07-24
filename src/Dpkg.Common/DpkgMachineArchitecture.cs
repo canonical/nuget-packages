@@ -31,13 +31,13 @@ public readonly partial struct DpkgMachineArchitecture : IIdentifier<DpkgMachine
         ReadOnlySpan<char> identifierSpan,
         out DpkgMachineArchitecture identifier,
         out ImmutableList<ParsingAnnotation> annotations,
-        bool failFast = false)
+        bool failEarly = false)
     {
         annotations = ImmutableList<ParsingAnnotation>.Empty;
 
         if (identifierSpan.Length < 1)
         {
-            if (failFast) goto abort;
+            if (failEarly) goto abort;
             annotations += ParsingAnnotation.Create(
                 descriptor: EmptyName,
                 location: identifierSpan.ToLocation());
@@ -60,7 +60,7 @@ public readonly partial struct DpkgMachineArchitecture : IIdentifier<DpkgMachine
             if (!char.IsAsciiLetterLower(currentCharacter)
                 && !char.IsAsciiDigit(currentCharacter))
             {
-                if (failFast) goto abort;
+                if (failEarly) goto abort;
 
                 if (invalidCharacters is null)
                 {

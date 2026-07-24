@@ -41,14 +41,14 @@ public interface IIdentifier<TSelf> :
     where TSelf : struct, IIdentifier<TSelf>
 {
     [Pure]
-    static abstract TSelf Parse(ReadOnlySpan<char> identifierSpan, bool failFast = false);
+    static abstract TSelf Parse(ReadOnlySpan<char> identifierSpan, bool failEarly = false);
 
     [Pure]
-    static abstract TSelf Parse(ReadOnlySpan<char> identifierSpan, out ImmutableList<ParsingAnnotation> annotations, bool failFast = false);
+    static abstract TSelf Parse(ReadOnlySpan<char> identifierSpan, out ImmutableList<ParsingAnnotation> annotations, bool failEarly = false);
 
     [Pure]
     static abstract bool TryParse(ReadOnlySpan<char> identifierSpan, out TSelf result);
 
     [Pure]
-    static abstract bool TryParse(ReadOnlySpan<char> identifierSpan, out TSelf result, out ImmutableList<ParsingAnnotation> annotations, bool failFast = false);
+    static abstract bool TryParse(ReadOnlySpan<char> identifierSpan, out TSelf result, out ImmutableList<ParsingAnnotation> annotations, bool failEarly = false);
 }
