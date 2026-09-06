@@ -17,8 +17,8 @@ program.  If not, see http://www.gnu.org/licenses/.
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>Canonical.DistroInfo.Data.SourceGeneration</AssemblyName>
-    <RootNamespace>Canonical.DistroInfo.Data.SourceGeneration</RootNamespace>
+    <AssemblyName>Canonical.DistroInfo.Static.SourceGeneration</AssemblyName>
+    <RootNamespace>Canonical.DistroInfo.Static.SourceGeneration</RootNamespace>
 
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
@@ -40,5 +40,6 @@ program.  If not, see http://www.gnu.org/licenses/.
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1"/>
   </ItemGroup>
+
 
 </Project>

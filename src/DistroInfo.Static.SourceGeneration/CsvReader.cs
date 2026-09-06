@@ -16,7 +16,7 @@
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-namespace Canonical.DistroInfo.Data.SourceGeneration;
+namespace Canonical.DistroInfo.Static.SourceGeneration;
 
 internal static class CsvReader
 {

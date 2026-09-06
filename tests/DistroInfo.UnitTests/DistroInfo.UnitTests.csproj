@@ -34,8 +34,7 @@ program.  If not, see http://www.gnu.org/licenses/.
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DistroInfo.Debian\DistroInfo.Debian.csproj" />
-    <ProjectReference Include="..\..\src\DistroInfo.Ubuntu\DistroInfo.Ubuntu.csproj" />
+    <ProjectReference Include="..\..\src\DistroInfo.Static\DistroInfo.Static.csproj" />
   </ItemGroup>
 
 </Project>

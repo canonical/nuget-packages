@@ -75,7 +75,7 @@ public class DpkgVersionTests
     public void Parsing_EmptyUbuntuRevisionAndNotAllowEmpty_Fails()
     {
         var versionString = "1-0ubuntu";
-        var options = DpkgVersionOptions.None;
+        var options = DpkgVersionStyle.None;
 
         {
             Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: false));
@@ -92,7 +92,7 @@ public class DpkgVersionTests
     [InlineData("1-ubuntu1", "DPKG-VERSION-013")]
     public void Parsing_EmptyDebianRevisionAndNotAllowEmpty_Fails(string versionString, string annotationIdentifier)
     {
-        var options = DpkgVersionOptions.None;
+        var options = DpkgVersionStyle.None;
 
         {
             Assert.False(DpkgVersion.TryParse(versionString, out _, out var annotations, options, failEarly: false));

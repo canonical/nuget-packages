@@ -13,13 +13,25 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
-using Canonical.Apt;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
-namespace Canonical.DistroInfo.Debian;
+namespace Canonical.DistroInfo.Static.SourceGeneration;
 
-public static partial class DebianReleases
+internal static class HelperExtensions
 {
-    public static DebianReleaseInfo? FromSeries(AptSeries series) =>
-        All.Where(release => release.Series == series)
-            .FirstOrDefault(defaultValue: null);
+    public static string AsDateOnlyLiteral(this string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "null";
+
+        var date = DateTime.Parse(value);
+        return $"new DateOnly(year: {date.Year}, month: {date.Month}, day: {date.Day})";
+    }
+
+    public static Location GetLocation(this AdditionalText file) => Location.Create(
+        file.Path,
+        textSpan: new TextSpan(0, 0),
+        lineSpan: new LinePositionSpan(
+            new LinePosition(0, 0),
+            new LinePosition(0, 0)));
 }

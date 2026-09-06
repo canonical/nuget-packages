@@ -17,20 +17,9 @@ using Canonical.Apt;
 
 namespace Canonical.DistroInfo.Debian;
 
-/// <summary>
-/// An immutable record of details about a Debian release.
-/// </summary>
-public sealed record DebianReleaseInfo
+public sealed record DebianReleaseInfo : IDistroReleaseInfo
 {
     private readonly string _stringRepresentation;
-
-    /// <summary>
-    /// Gets a value indicating whether the Debian release is declared stable.
-    /// </summary>
-    /// <remarks>
-    /// A stable Debian release is a release that is considered to be production-ready and suitable for widespread use.
-    /// </remarks>
-    public bool IsStable { get; }
 
     /// <summary>
     /// The version identifier of Debian release.
@@ -52,7 +41,7 @@ public sealed record DebianReleaseInfo
     public string Codename { get; }
 
     /// <summary>
-    /// Represents the series identifier of an Debian release.
+    /// Represents the series identifier of a Debian release.
     /// </summary>
     /// <example>
     /// <c>bookworm</c>
@@ -96,32 +85,88 @@ public sealed record DebianReleaseInfo
     /// </remarks>
     public DateOnly? EndOfLife { get; }
 
-    internal DebianReleaseInfo(
-        bool isStable,
+    public DebianReleaseInfo(
         string? version,
         string codename,
-        string series,
+        AptSeries series,
         DateOnly created,
         DateOnly? released,
         DateOnly? endOfStandardSupport,
         DateOnly? endOfLongTermSupport,
-        DateOnly? endOfExtendedLongTermSupport,
-        DateOnly? endOfLife,
-        string stringRepresentation)
+        DateOnly? endOfExtendedLongTermSupport)
     {
-        IsStable = isStable;
         Version = version;
         Codename = codename;
-        Series = AptSeries.Parse(series);
+        Series = series;
         Created = created;
         Released = released;
         EndOfStandardSupport = endOfStandardSupport;
         EndOfLongTermSupport = endOfLongTermSupport;
         EndOfExtendedLongTermSupport = endOfExtendedLongTermSupport;
-        EndOfLife = endOfLife;
-        _stringRepresentation = stringRepresentation;
+        EndOfLife = endOfExtendedLongTermSupport ?? endOfLongTermSupport ?? endOfStandardSupport;
+
+        var versionText = version is { Length: > 0 } ? $"{version} " : string.Empty;
+        _stringRepresentation = $"Debian {versionText}({codename})";
     }
 
     /// <inheritdoc />
     public override string ToString() => _stringRepresentation;
+
+    public DebianSupportStatus GetSupportStatus() =>
+        GetSupportStatus(DistroInfo.DefaultDateOrToday);
+
+    public DebianSupportStatus GetSupportStatus(DateTime? date) =>
+        GetSupportStatus(DistroInfo.GetDateOrDefault(date));
+
+    public DebianSupportStatus GetSupportStatus(DateOnly? date) =>
+        GetSupportStatus(DistroInfo.GetDateOrDefault(date));
+
+    public DebianSupportStatus GetSupportStatus(DateOnly date)
+    {
+        if (date < Created)
+            return DebianSupportStatus.Unknown;
+        if (Released is null || date < Released)
+            return DebianSupportStatus.Development;
+        if (EndOfLife is null || date <= EndOfStandardSupport)
+            return DebianSupportStatus.StandardSupport;
+        if (date <= EndOfLongTermSupport)
+            return DebianSupportStatus.LongTermSupport;
+        if (date <= EndOfExtendedLongTermSupport)
+            return DebianSupportStatus.ExtendedLongTermSupport;
+
+        return DebianSupportStatus.Unsupported;
+    }
+}
+
+public enum DebianSupportStatus
+{
+    /// <summary>
+    /// The release was unknown at the specified date.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
+    /// The release was in active development at the specified date.
+    /// </summary>
+    Development,
+
+    /// <summary>
+    /// The release received standard support at the specified date.
+    /// </summary>
+    StandardSupport,
+
+    /// <summary>
+    /// The release received long-term support (LTS) at the specified date.
+    /// </summary>
+    LongTermSupport,
+
+    /// <summary>
+    /// The release received extended long-term support (ELTS) at the specified date.
+    /// </summary>
+    ExtendedLongTermSupport,
+
+    /// <summary>
+    /// The release is no longer supported at the specified date.
+    /// </summary>
+    Unsupported,
 }

@@ -61,7 +61,7 @@ public readonly partial struct AptSeries : IIdentifier<AptSeries>
         {
             char currentCharacter = identifierSpan[position];
 
-            if (!char.IsAsciiLetterLower(currentCharacter))
+            if (!char.IsAsciiLetterLower(currentCharacter) && currentCharacter != '-')
             {
                 if (failEarly) goto abort;
 

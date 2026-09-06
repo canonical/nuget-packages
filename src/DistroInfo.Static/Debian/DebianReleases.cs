@@ -13,14 +13,9 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
-using Canonical.Apt;
+namespace Canonical.DistroInfo.Debian;
 
-namespace Canonical.DistroInfo.Ubuntu;
-
-public static partial class UbuntuReleases
+public static partial class DebianReleases
 {
-    public static UbuntuReleaseInfo? FromSeries(AptSeries series) =>
-        All
-        .Where(release => release.Series == series)
-        .FirstOrDefault(defaultValue: null);
+
 }

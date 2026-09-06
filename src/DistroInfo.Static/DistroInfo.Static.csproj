@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 Copyright (C) 2026 Canonical Ltd.
 
 SPDX-License-Identifier: GPL-3.0-only
@@ -17,25 +17,20 @@ program.  If not, see http://www.gnu.org/licenses/.
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <AssemblyName>Canonical.DistroInfo.Debian</AssemblyName>
-        <RootNamespace>Canonical.DistroInfo.Debian</RootNamespace>
-
-        <!-- fails build if source generator failed to generate source -->
-        <WarningsAsErrors>CS8785</WarningsAsErrors>
+        <AssemblyName>Canonical.DistroInfo.Static</AssemblyName>
+        <RootNamespace>Canonical.DistroInfo</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Apt.Common\Apt.Common.csproj" />
-        <ProjectReference Include="..\Dpkg.Common\Dpkg.Common.csproj" />
-
-        <ProjectReference Include="../DistroInfo.Data.SourceGeneration/DistroInfo.Data.SourceGeneration.csproj"
+        <ProjectReference Include="../DistroInfo/DistroInfo.csproj" />
+        <ProjectReference Include="../DistroInfo.Static.SourceGeneration/DistroInfo.Static.SourceGeneration.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>
         <AdditionalFiles Include="/usr/share/distro-info/debian.csv" />
+        <AdditionalFiles Include="/usr/share/distro-info/ubuntu.csv" />
     </ItemGroup>
-
 
 </Project>

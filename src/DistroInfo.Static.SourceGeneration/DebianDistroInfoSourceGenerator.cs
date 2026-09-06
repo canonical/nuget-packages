@@ -14,107 +14,79 @@
 // program.  If not, see http://www.gnu.org/licenses/.
 
 using System.Collections.Immutable;
-using System.Text;
 using Microsoft.CodeAnalysis;
-
 using static Microsoft.CodeAnalysis.CSharp.SymbolDisplay;
 
-namespace Canonical.DistroInfo.Data.SourceGeneration;
+namespace Canonical.DistroInfo.Static.SourceGeneration;
 
 [Generator]
-public sealed class UbuntuDistroInfoSourceGenerator : IIncrementalGenerator
+public sealed class DebianDistroInfoSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var ubuntuCsvFile = context.AdditionalTextsProvider
-            .Where(additionalText => Path.GetFileName(additionalText.Path).Equals("ubuntu.csv"))
+        var debianCsvFile = context.AdditionalTextsProvider
+            .Where(additionalText => Path.GetFileName(additionalText.Path).Equals("debian.csv"))
             .Collect();
 
-        context.RegisterSourceOutput(ubuntuCsvFile, GenerateSource);
+        context.RegisterSourceOutput(debianCsvFile, GenerateSource);
     }
 
     private static void GenerateSource(
         SourceProductionContext context,
-        ImmutableArray<AdditionalText> ubuntuCsvFiles)
+        ImmutableArray<AdditionalText> debianCsvFiles)
     {
         context.CancellationToken.ThrowIfCancellationRequested();
 
-        switch (ubuntuCsvFiles.Length)
+        switch (debianCsvFiles.Length)
         {
             case 0:
                 return;
             case > 1:
-                context.ReportMultipleUbuntuCsvFilesFound(ubuntuCsvFiles);
+                context.ReportMultipleDebianCsvFilesFound(debianCsvFiles);
                 return;
         }
 
-        var sourceText = new StringBuilder();
-
-        string path = ubuntuCsvFiles[0].Path;
+        string path = debianCsvFiles[0].Path;
         var names = new List<string>();
-        foreach ((int lineNumber, var row) in CsvReader.ReadRows(ubuntuCsvFiles[0], context))
+        foreach ((int lineNumber, var row) in CsvReader.ReadRows(debianCsvFiles[0], context))
         {
-            if (!row.TryGetValue("version", out var version) || string.IsNullOrWhiteSpace(version))
+            if (!row.TryGetValue("version", out var version))
             {
                 context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "version");
-                continue;
+                return;
             }
-
-            bool isLts = false;
-            if (version.EndsWith(" LTS"))
+            else if (string.IsNullOrWhiteSpace(version))
             {
-                isLts = true;
-                version = version.Substring(startIndex: 0, length: version.Length - 4);
+                version = null;
             }
 
-            if (!row.TryGetValue("codename", out var codename)|| string.IsNullOrWhiteSpace(codename))
+            if (!row.TryGetValue("codename", out var codename) || string.IsNullOrWhiteSpace(codename))
             {
                 context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "codename");
-                continue;
+                return;
             }
 
             if (!row.TryGetValue("series", out var series) || string.IsNullOrWhiteSpace(series))
             {
                 context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "series");
-                continue;
+                return;
             }
 
             if (!row.TryGetValue("created", out var created) || string.IsNullOrWhiteSpace(created))
             {
                 context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "created");
-                continue;
+                return;
             }
 
-            if (!row.TryGetValue("release", out var release) || string.IsNullOrWhiteSpace(release))
-            {
-                context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "release");
-                continue;
-            }
-
-            if (!row.TryGetValue("eol", out var eol) || string.IsNullOrWhiteSpace(eol))
-            {
-                context.ReportRowIsMissingRequiredColumn(lineNumber, path, missingColumn: "eol");
-                continue;
-            }
-
-            row.TryGetValue("eol-server", out var eolServer);
-
-            if (eol.Equals(eolServer))
-            {
-                eolServer = null;
-            }
-
-            row.TryGetValue("eol-esm", out var eolEsm);
+            row.TryGetValue("release", out var release);
+            row.TryGetValue("eol", out var eol);
+            row.TryGetValue("eol-lts", out var eolLts);
+            row.TryGetValue("eol-elts", out var eolELts);
 
             string name = codename.Replace(" ", "");
             names.Add(name);
 
-            sourceText.Clear();
-            sourceText.Append("Ubuntu ").Append(version);
-            if (isLts) sourceText.Append(" LTS");
-            sourceText.Append(" (").Append(codename).Append(')');
-
-            context.AddSource(hintName: $"UbuntuReleases.{name}.g.cs", $$"""
+            context.AddSource(hintName: $"DebianReleases.{name}.g.cs", $$"""
                 // Copyright (C) 2026 Canonical Ltd.
                 //
                 // SPDX-License-Identifier: GPL-3.0-only
@@ -130,30 +102,28 @@ public sealed class UbuntuDistroInfoSourceGenerator : IIncrementalGenerator
                 // You should have received a copy of the GNU General Public License along with this
                 // program.  If not, see http://www.gnu.org/licenses/.
 
-                namespace Canonical.DistroInfo.Ubuntu;
+                using Canonical.Apt;
 
-                public static partial class UbuntuReleases
+                namespace Canonical.DistroInfo.Debian;
+
+                public static partial class DebianReleases
                 {
-                    public static UbuntuReleaseInfo {{name}} = new UbuntuReleaseInfo(
-                        version: {{FormatLiteral(version, quote: true)}},
-                        isLts: {{(isLts ? "true" : "false")}},
+                    public static DebianReleaseInfo {{name}} = new DebianReleaseInfo(
+                        version: {{( version is null ? "null" : FormatLiteral(version, quote: true))}},
                         codename: {{FormatLiteral(codename, quote: true)}},
-                        series: {{FormatLiteral(series, quote: true)}},
+                        series: AptSeries.Parse({{FormatLiteral(series, quote: true)}}),
                         created: {{created.AsDateOnlyLiteral()}},
                         released: {{release.AsDateOnlyLiteral()}},
                         endOfStandardSupport: {{eol.AsDateOnlyLiteral()}},
-                        endOfServerStandardSupport: {{eolServer.AsDateOnlyLiteral()}},
-                        endOfExpandedSecurityMaintenance: {{eolEsm.AsDateOnlyLiteral()}},
-                        endOfLife: {{(eolEsm ?? eolServer ?? eol).AsDateOnlyLiteral()}},
-                        stringRepresentation: {{FormatLiteral(sourceText.ToString(), quote: true)}});
+                        endOfLongTermSupport: {{eolLts.AsDateOnlyLiteral()}},
+                        endOfExtendedLongTermSupport: {{eolELts.AsDateOnlyLiteral()}});
                 }
                 """);
         }
 
         context.CancellationToken.ThrowIfCancellationRequested();
 
-        sourceText.Clear();
-        sourceText.AppendLine($$"""
+        context.AddSource(hintName: "DebianReleases.g.cs", $$"""
             // Copyright (C) 2026 Canonical Ltd.
             //
             // SPDX-License-Identifier: GPL-3.0-only
@@ -171,15 +141,13 @@ public sealed class UbuntuDistroInfoSourceGenerator : IIncrementalGenerator
 
             using System.Collections.Immutable;
 
-            namespace Canonical.DistroInfo.Ubuntu;
+            namespace Canonical.DistroInfo.Debian;
 
-            public static partial class UbuntuReleases
+            public static partial class DebianReleases
             {
-                public static readonly ImmutableArray<UbuntuReleaseInfo> All = [ {{ string.Join(", ", names) }} ];
+                public static readonly ImmutableArray<DebianReleaseInfo> All = [ {{ string.Join(", ", names) }} ];
             }
 
             """);
-
-        context.AddSource(hintName: "UbuntuReleases.g.cs", sourceText.ToString());
     }
 }

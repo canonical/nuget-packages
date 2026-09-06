@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License along with this
 // program.  If not, see http://www.gnu.org/licenses/.
 
-using Canonical.Apt;
 using Canonical.DistroInfo.Ubuntu;
 
 namespace Canonical.DistroInfo.UnitTests;
@@ -28,14 +27,15 @@ public class UbuntuReleasesTests
         // - the FromSeries logic works
         // - UbuntuRelease comparison works
 
-        var release = UbuntuReleases.FromSeries(AptSeries.Parse("noble"));
+        Assert.True(UbuntuReleases.Collection.TryGetBySeries("noble", out var release));
         Assert.Equal(actual: release, expected: UbuntuReleases.NobleNumbat);
     }
 
     [Fact]
     public void NobleNumbat_Has_ExpectedValues()
     {
-        Assert.Equal(actual: UbuntuReleases.NobleNumbat.Version, expected: "24.04");
+        Assert.Equal(actual: UbuntuReleases.NobleNumbat.Version, expected: "24.04 LTS");
+        Assert.Equal(actual: UbuntuReleases.NobleNumbat.ShortVersion, expected: "24.04");
         Assert.True(UbuntuReleases.NobleNumbat.IsLts);
         Assert.Equal(actual: UbuntuReleases.NobleNumbat.Codename, expected: "Noble Numbat");
         Assert.Equal(actual: UbuntuReleases.NobleNumbat.Series.Identifier, expected: "noble");
