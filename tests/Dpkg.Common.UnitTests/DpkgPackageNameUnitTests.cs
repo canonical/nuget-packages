@@ -19,6 +19,8 @@ namespace Canonical.Dpkg.UnitTests;
 
 public class DpkgPackageNameUnitTests
 {
+    private const string DpkgNamesFile = "valid-dpkg-names.txt";
+
     public static TheoryData<string> ValidNames =>
     [
         "z9",
@@ -45,6 +47,16 @@ public class DpkgPackageNameUnitTests
         "foo/bar",           // slash is not permitted
         "föö",               // non-ASCII letter
     ];
+
+    [Fact]
+    public void KnownPackageNames_ShouldBe_Parsable()
+    {
+        foreach (var packageName in File.ReadLines(DpkgNamesFile))
+        {
+            var dpkgPackageName = DpkgPackageName.Parse(packageName);
+            Assert.Equal(actual: dpkgPackageName.Identifier, expected: packageName);
+        }
+    }
 
     [Fact]
     public void Sort()
