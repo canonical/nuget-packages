@@ -20,25 +20,25 @@ namespace Canonical.Dpkg;
 
 public partial class DpkgVersion
 {
-    private static readonly ParsingAnnotationDescriptor EmptyVersion = new(
+    public static readonly ParsingAnnotationDescriptor EmptyVersion = new(
         Identifier: "DPKG-VERSION-001",
         Title: "Empty version",
         MessageFormat: "Dpkg version string is empty.");
 
     #region Epoch
 
-    private static readonly ParsingAnnotationDescriptor EmptyEpoch = new(
+    public static readonly ParsingAnnotationDescriptor EmptyEpoch = new(
         Identifier: "DPKG-VERSION-002",
         Title: "Empty epoch",
         MessageFormat: $"Dpkg version string has no value before epoch delimiter '{EPOCH_DELIMITER}'.");
 
-    private static readonly ParsingAnnotationDescriptor InvalidEpochCharacters = new(
+    public static readonly ParsingAnnotationDescriptor InvalidEpochCharacters = new(
         Identifier: "DPKG-VERSION-003",
         Title: "Invalid epoch characters",
         MessageFormat: "Epoch value '{0}' contains invalid characters: {1}.",
         Description: "The epoch value has to be an unsigned number.");
 
-    private static readonly ParsingAnnotationDescriptor EpochValueTooLarge = new(
+    public static readonly ParsingAnnotationDescriptor EpochValueTooLarge = new(
         Identifier: "DPKG-VERSION-004",
         Title: "Epoch value too large",
         MessageFormat: "Numerical value of epoch '{0}' is too large.",
@@ -48,12 +48,12 @@ public partial class DpkgVersion
 
     #region Upstream Version
 
-    private static readonly ParsingAnnotationDescriptor EmptyUpstreamVersion = new(
+    public static readonly ParsingAnnotationDescriptor EmptyUpstreamVersion = new(
         Identifier: "DPKG-VERSION-005",
         Title: "Empty upstream version",
         MessageFormat: "Dpkg version does not specify an upstream version.");
 
-    private static readonly ParsingAnnotationDescriptor InvalidUpstreamVersionCharacters = new(
+    public static readonly ParsingAnnotationDescriptor InvalidUpstreamVersionCharacters = new(
         Identifier: "DPKG-VERSION-006",
         Title: "Invalid upstream version characters",
         MessageFormat: "Upstream version value '{0}' contains invalid characters: {1}.",
@@ -67,14 +67,14 @@ public partial class DpkgVersion
         "version number can not simply be lowered, because the package manager ignores all " +
         "packages with a lower version number than the already installed package version.";
 
-    private static readonly ParsingAnnotationDescriptor MultipleRealUpstreamVersionDelimiter = new(
+    public static readonly ParsingAnnotationDescriptor MultipleRealUpstreamVersionDelimiter = new(
         Identifier: "DPKG-VERSION-007",
         Title: $"Multiple '{REAL_UPSTREAM_VERSION_DELIMITER}' delimiter",
         MessageFormat: $"Dpkg version string contains multiple '{REAL_UPSTREAM_VERSION_DELIMITER}' delimiter.",
         Description: REAL_UPSTREAM_VERSION_DELIMITER_DESCRIPTION +
                      $" The '{REAL_UPSTREAM_VERSION_DELIMITER}' delimiter should only occur once.");
 
-    private static readonly ParsingAnnotationDescriptor EmptyRevertedUpstreamVersion = new(
+    public static readonly ParsingAnnotationDescriptor EmptyRevertedUpstreamVersion = new(
         Identifier: "DPKG-VERSION-008",
         Title: "Empty reverted upstream version",
         MessageFormat: "The upstream version '{0}' contains no value before the " +
@@ -83,7 +83,7 @@ public partial class DpkgVersion
                      "If you use this delimiter, you should specify the reverted (old) " +
                      "version before the delimiter.");
 
-    private static readonly ParsingAnnotationDescriptor EmptyRealUpstreamVersion = new(
+    public static readonly ParsingAnnotationDescriptor EmptyRealUpstreamVersion = new(
         Identifier: "DPKG-VERSION-009",
         Title: "Empty real upstream version",
         MessageFormat: "The upstream version '{0}' contains no value after the " +
@@ -99,25 +99,25 @@ public partial class DpkgVersion
         $"The '{UBUNTU_REVISION_DELIMITER}' delimiter within the debian revision component of a version string " +
         $"is a convention to indicate changes which are only applied to Ubuntu packages.";
 
-    private static readonly ParsingAnnotationDescriptor EmptyRevision = new(
+    public static readonly ParsingAnnotationDescriptor EmptyRevision = new(
         Identifier: "DPKG-VERSION-010",
         Title: "Empty revision",
         MessageFormat: "Dpkg version does not specify a revision version.");
 
-    private static readonly ParsingAnnotationDescriptor InvalidRevisionCharacters = new(
+    public static readonly ParsingAnnotationDescriptor InvalidRevisionCharacters = new(
         Identifier: "DPKG-VERSION-011",
         Title: "Invalid revision characters",
         MessageFormat: "Revision value '{0}' contains invalid characters: {1}.",
         Description: "A revision must consist only of lowercase letters (a-z), " +
                      "digits (0-9), plus (+), and periods (.) and tilde (~) signs.");
 
-    private static readonly ParsingAnnotationDescriptor MultipleUbuntuRevisionDelimiter = new(
+    public static readonly ParsingAnnotationDescriptor MultipleUbuntuRevisionDelimiter = new(
         Identifier: "DPKG-VERSION-012",
         Title: $"Multiple '{UBUNTU_REVISION_DELIMITER}' delimiter",
         MessageFormat: $"Dpkg version string contains multiple '{UBUNTU_REVISION_DELIMITER}' delimiter.",
         Description: UBUNTU_REVISION_DELIMITER_DESCRIPTION + " This delimiter should only occur once.");
 
-    private static readonly ParsingAnnotationDescriptor EmptyDebianRevision = new(
+    public static readonly ParsingAnnotationDescriptor EmptyDebianRevision = new(
         Identifier: "DPKG-VERSION-013",
         Title: "Empty Debian revision",
         MessageFormat: "The revision '{0}' contains no value before the " +
@@ -126,7 +126,7 @@ public partial class DpkgVersion
                      " If you use this delimiter, you should specify the Debian revision" +
                      " before the delimiter. This can be a 0 if there exists no package in Debian yet.");
 
-    private static readonly ParsingAnnotationDescriptor EmptyUbuntuRevision = new(
+    public static readonly ParsingAnnotationDescriptor EmptyUbuntuRevision = new(
         Identifier: "DPKG-VERSION-014",
         Title: "Empty Ubuntu revision",
         MessageFormat: "The revision '{0}' contains no value after the " +
@@ -138,7 +138,7 @@ public partial class DpkgVersion
     #endregion
 }
 
-public sealed class MalformedDpkgVersionException : ParsingException
+public class MalformedDpkgVersionException : ParsingException
 {
     public MalformedDpkgVersionException(
         string value,
