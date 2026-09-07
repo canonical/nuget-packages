@@ -8,17 +8,6 @@ Reusable .NET libraries extracted from Canonical projects.
 
 ## Libraries
 
-### Canonical.Madison
-
-[![#](https://img.shields.io/nuget/v/Canonical.Madison.svg)](https://www.nuget.org/packages/Canonical.Madison/)
-
-Typed HTTP client for the Madison package version lookup service (.NET equivalent of rmadison(1)). Supports querying Debian and Ubuntu archives for package versions by suite, architecture, and component, with pre-configured endpoints for Ubuntu, Debian, and Debian QA mirrors.
-
-- `MadisonClient`
-- `MadisonRequest`
-- `MadisonResponse`
-- `WellKnownMadisonEndpoints`
-
 ### Canonical.Dpkg.Common
 
 [![#](https://img.shields.io/nuget/v/Canonical.Dpkg.Common.svg)](https://www.nuget.org/packages/Canonical.Dpkg.Common/)
@@ -71,6 +60,16 @@ Compile-time complement to `Canonical.DistroInfo`. Provides static instances of 
 - `DebianReleases`
 - `UbuntuReleases`
 
+### Canonical.Madison
+
+[![#](https://img.shields.io/nuget/v/Canonical.Madison.svg)](https://www.nuget.org/packages/Canonical.Madison/)
+
+Typed HTTP client for the Madison package version lookup service (.NET equivalent of rmadison(1)). Supports querying Debian and Ubuntu archives for package versions by suite, architecture, and component, with pre-configured endpoints for Ubuntu, Debian, and Debian QA mirrors.
+
+- `MadisonClient`
+- `MadisonRequest`
+- `MadisonResponse`
+- `WellKnownMadisonEndpoints`
 
 ## License
 
