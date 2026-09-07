@@ -1,0 +1,27 @@
+name: CI workflow
+
+on:
+  push:
+    branches: main
+    paths:
+      - .github/workflows/build-and-test.yaml
+      - eng/**
+      - src/**
+      - tests/**
+  pull_request:
+    branches: main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build all & run tests
+    runs-on: ubuntu-26.04
+    steps:
+      - name: checkout source
+        uses: actions/checkout@v6
+      - name: install dotnet
+        run: sudo apt-get install --assume-yes --update dotnet10
+      - name: dotnet build
+        run: dotnet build
+      - name: dotnet test
+        run: dotnet build
