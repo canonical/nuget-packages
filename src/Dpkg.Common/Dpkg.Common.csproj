@@ -22,7 +22,14 @@ program.  If not, see http://www.gnu.org/licenses/.
 
     <!-- fails build if source generator failed to generate source -->
     <WarningsAsErrors>CS8785</WarningsAsErrors>
+
+    <Description>Strongly-typed immutable value types, parsers, and comparison logic for core dpkg primitives: package names, machine architectures, and the full deb-version(7) version format.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Common.SourceGenerator/Common.SourceGeneration.csproj"

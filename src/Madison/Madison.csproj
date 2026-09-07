@@ -19,6 +19,13 @@ program.  If not, see http://www.gnu.org/licenses/.
   <PropertyGroup>
     <AssemblyName>Canonical.Madison</AssemblyName>
     <RootNamespace>Canonical.Madison</RootNamespace>
+
+    <Description>Typed HTTP client for the Madison package version lookup service (.NET equivalent of rmadison(1)). Supports querying Debian and Ubuntu archives for package versions by suite, architecture, and component, with pre-configured endpoints for Ubuntu, Debian, and Debian QA mirrors.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
 </Project>

@@ -19,12 +19,18 @@ program.  If not, see http://www.gnu.org/licenses/.
   <PropertyGroup>
     <AssemblyName>Canonical.DistroInfo</AssemblyName>
     <RootNamespace>Canonical.DistroInfo</RootNamespace>
+
+    <Description>Library for querying Linux distribution release metadata. Reads distro-info-data CSV files at runtime to provide Ubuntu and Debian release information, including support status, ESM/LTS lifecycle queries and well-known identifiers.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Apt.Common\Apt.Common.csproj" />
     <ProjectReference Include="..\Dpkg.Common\Dpkg.Common.csproj" />
   </ItemGroup>
-    
 
 </Project>

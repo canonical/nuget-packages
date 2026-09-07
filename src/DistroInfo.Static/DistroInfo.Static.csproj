@@ -19,7 +19,14 @@ program.  If not, see http://www.gnu.org/licenses/.
     <PropertyGroup>
         <AssemblyName>Canonical.DistroInfo.Static</AssemblyName>
         <RootNamespace>Canonical.DistroInfo</RootNamespace>
-    </PropertyGroup>
+
+        <Description>Compile-time complement to Canonical.DistroInfo. Provides static instances of the release data from the distro-info CSV files, eliminating the runtime file dependency.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../DistroInfo/DistroInfo.csproj" />

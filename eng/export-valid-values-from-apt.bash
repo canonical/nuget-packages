@@ -30,4 +30,4 @@ apt list 2>/dev/null \
   | awk 'NF>1 {print $2}' \
   | sort -u \
   | python3 "${ROOT_DIR}/eng/sort-dpkg-versions.py" \
-  > "${ROOT_DIR}/tests/Dpkg.Common.UnitTests/valid-dpkg-versions.txt"
+  > "${ROOT_DIR}/tests/Dpkg.Common.UnitTests/valid-dpkg-versions_sorted.txt"
