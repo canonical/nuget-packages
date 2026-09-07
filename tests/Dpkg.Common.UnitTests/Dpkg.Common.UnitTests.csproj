@@ -38,8 +38,8 @@ program.  If not, see http://www.gnu.org/licenses/.
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="dpkg-names.txt" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="dpkg-versions_sorted.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="valid-dpkg-names.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="valid-dpkg-versions_sorted.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

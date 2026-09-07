@@ -20,7 +20,7 @@ namespace Canonical.Dpkg.UnitTests;
 
 public class DpkgVersionTests
 {
-    private const string SortedDpkgVersionsFile = "valid-dpkg-versions.txt";
+    private const string SortedDpkgVersionsFile = "valid-dpkg-versions_sorted.txt";
 
     private readonly ITestOutputHelper _testOutput;
 
