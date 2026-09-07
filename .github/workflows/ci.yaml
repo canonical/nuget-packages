@@ -24,4 +24,4 @@ jobs:
       - name: dotnet build
         run: dotnet build
       - name: dotnet test
-        run: dotnet build
+        run: dotnet test
