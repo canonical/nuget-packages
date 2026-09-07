@@ -118,6 +118,32 @@ public partial class DpkgVersion :
         UbuntuRevision = ubuntuRevision;
     }
 
+    protected static DpkgVersion Create(
+        ReadOnlySpan<char> versionSpan,
+        ReadOnlySpan<char> epochSpan,
+        uint epochValue,
+        ReadOnlySpan<char> upstreamVersionSpan,
+        int realUpstreamVersionSpanOffset,
+        ReadOnlySpan<char> revertedUpstreamVersionSpan,
+        ReadOnlySpan<char> realUpstreamVersionSpan,
+        int revisionSpanOffset,
+        ReadOnlySpan<char> revisionSpan,
+        int ubuntuRevisionSpanOffset,
+        ReadOnlySpan<char> debianRevisionSpan,
+        ReadOnlySpan<char> ubuntuRevisionSpan)
+    {
+        return new DpkgVersion(
+            originalString: versionSpan.ToString(),
+            epoch: epochSpan.Length > 0 ? epochSpan.ToString() : null,
+            epochValue: epochValue,
+            upstreamVersion: upstreamVersionSpan.ToString(),
+            revertedUpstreamVersion: realUpstreamVersionSpanOffset > 0 ? revertedUpstreamVersionSpan.ToString() : null,
+            realUpstreamVersion: realUpstreamVersionSpanOffset > 0 ? realUpstreamVersionSpan.ToString() : null,
+            revision: revisionSpanOffset >= 0 ? revisionSpan.ToString() : null,
+            debianRevision: revisionSpanOffset >= 0 ? debianRevisionSpan.ToString() : null,
+            ubuntuRevision: ubuntuRevisionSpanOffset >= 0 ? ubuntuRevisionSpan.ToString() : null);
+    }
+
     /// <summary>
     /// A single (generally small) unsigned integer. It may be omitted, in which case <see cref="Epoch"/> will be
     /// <see langword="null"/>. If it is omitted then <see cref="UpstreamVersion"/> may not contain any <c>:</c> (colon).

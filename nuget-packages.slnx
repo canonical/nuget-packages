@@ -26,7 +26,9 @@ program.  If not, see http://www.gnu.org/licenses/.
   <Folder Name="/DistroInfo/">
     <Project Path="src/DistroInfo.Static/DistroInfo.Static.csproj" />
     <Project Path="src/DistroInfo.Static.SourceGeneration/DistroInfo.Static.SourceGeneration.csproj" />
+    <Project Path="src/DistroInfo.Ubuntu.Dotnet/DistroInfo.Ubuntu.Dotnet.csproj" />
     <Project Path="src/DistroInfo/DistroInfo.csproj" />
+    <Project Path="tests/DistroInfo.Ubuntu.Dotnet.UnitTests/DistroInfo.Ubuntu.Dotnet.UnitTests.csproj" />
     <Project Path="tests/DistroInfo.UnitTests/DistroInfo.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Madison/">

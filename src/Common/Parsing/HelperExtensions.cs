@@ -14,7 +14,6 @@
 // program.  If not, see http://www.gnu.org/licenses/.
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace Canonical.Common.Parsing;
 
@@ -33,6 +32,11 @@ public static class HelperExtensions
             if (b.IsEmpty) return a;
             return [..a, ..b];
         }
+
+        public static ImmutableList<ParsingAnnotation> operator +(ImmutableList<ParsingAnnotation> a, IEnumerable<ParsingAnnotation> b) =>
+            a.IsEmpty
+            ? [.. b]
+            : a.AddRange(b);
     }
 
     extension(IEnumerable<ParsingAnnotation> annotations)
