@@ -20,28 +20,28 @@ using Canonical.Common.Parsing;
 namespace Canonical.Dpkg;
 
 [Flags]
-public enum DpkgVersionOptions
+public enum DpkgVersionStyle
 {
     None = 0,
 
     /// <summary>
     /// An empty version string will be interpreted as <see cref="DpkgVersion.Empty"/>.
     /// </summary>
-    EmptyVersion = 1 << 0,
+    AllowEmpty = 1 << 0,
 
     /// <summary>
     /// A version string where <see cref="DpkgVersion.UbuntuRevision"/> contains a
     /// <see cref="DpkgVersion.REAL_UPSTREAM_VERSION_DELIMITER"/> can have an empty
     /// <see cref="DpkgVersion.RevertedUpstreamVersion"/> (value before the delimiter).
     /// </summary>
-    EmptyRevertedUpstreamVersion = 1 << 1,
+    AllowEmptyRevertedUpstreamVersion = 1 << 1,
 
     /// <summary>
     /// A version string where <see cref="DpkgVersion.UbuntuRevision"/> contains a
     /// <see cref="DpkgVersion.REAL_UPSTREAM_VERSION_DELIMITER"/> can have an empty
     /// <see cref="DpkgVersion.RealUpstreamVersion"/> (value after the delimiter).
     /// </summary>
-    EmptyRealUpstreamVersion = 1 << 2,
+    AllowEmptyRealUpstreamVersion = 1 << 2,
 
     /// <summary>
     /// The <see cref="DpkgVersion.UpstreamVersion"/> part of a version string can contain
@@ -49,21 +49,21 @@ public enum DpkgVersionOptions
     /// Only the first delimiter is used to split <see cref="DpkgVersion.RealUpstreamVersion"/>
     /// and <see cref="DpkgVersion.RevertedUpstreamVersion"/>.
     /// </summary>
-    MultipleRealUpstreamVersionDelimiter = 1 << 3,
+    AllowMultipleRealUpstreamVersionDelimiter = 1 << 3,
 
     /// <summary>
     /// A version string where <see cref="DpkgVersion.Revision"/> contains a
     /// <see cref="DpkgVersion.UBUNTU_REVISION_DELIMITER"/> can have an empty
     /// <see cref="DpkgVersion.DebianRevision"/> (value before the delimiter).
     /// </summary>
-    EmptyDebianRevision = 1 << 4,
+    AllowEmptyDebianRevision = 1 << 4,
 
     /// <summary>
     /// A version string where <see cref="DpkgVersion.Revision"/> contains a
     /// <see cref="DpkgVersion.UBUNTU_REVISION_DELIMITER"/> can have an empty
     /// <see cref="DpkgVersion.UbuntuRevision"/> (value after the delimiter).
     /// </summary>
-    EmptyUbuntuRevision = 1 << 5,
+    AllowEmptyUbuntuRevision = 1 << 5,
 
     /// <summary>
     /// The <see cref="DpkgVersion.Revision"/> part of a version string can contain
@@ -71,19 +71,19 @@ public enum DpkgVersionOptions
     /// Only the first delimiter is used to split <see cref="DpkgVersion.DebianRevision"/>
     /// and <see cref="DpkgVersion.UbuntuRevision"/>.
     /// </summary>
-    MultipleUbuntuRevisionDelimiters = 1 << 6,
+    AllowMultipleUbuntuRevisionDelimiters = 1 << 6,
 
     /// <summary>
     /// Default behavior of the <see cref="DpkgVersion"/> parsing functions.
     /// </summary>
     Default = None
-              | EmptyVersion
-              | EmptyRevertedUpstreamVersion
-              | EmptyRealUpstreamVersion
-              | MultipleRealUpstreamVersionDelimiter
-              | EmptyDebianRevision
-              | EmptyUbuntuRevision
-              | MultipleUbuntuRevisionDelimiters
+              | AllowEmpty
+              | AllowEmptyRevertedUpstreamVersion
+              | AllowEmptyRealUpstreamVersion
+              | AllowMultipleRealUpstreamVersionDelimiter
+              | AllowEmptyDebianRevision
+              | AllowEmptyUbuntuRevision
+              | AllowMultipleUbuntuRevisionDelimiters
 }
 
 public partial class DpkgVersion :
@@ -136,10 +136,10 @@ public partial class DpkgVersion :
 
     public static DpkgVersion Parse(
         ReadOnlySpan<char> versionSpan,
-        DpkgVersionOptions options = DpkgVersionOptions.Default,
+        DpkgVersionStyle style = DpkgVersionStyle.Default,
         bool failEarly = false)
     {
-        return TryParse(versionSpan, out var version, out var annotations, options, failEarly)
+        return TryParse(versionSpan, out var version, out var annotations, style, failEarly)
             ? version
             : throw new MalformedDpkgVersionException(versionSpan.ToString(), annotations);
     }
@@ -148,10 +148,10 @@ public partial class DpkgVersion :
         ReadOnlySpan<char> versionSpan,
         // ReSharper disable once OutParameterValueIsAlwaysDiscarded.Global
         out ImmutableList<ParsingAnnotation> annotations,
-        DpkgVersionOptions options = DpkgVersionOptions.Default,
+        DpkgVersionStyle style = DpkgVersionStyle.Default,
         bool failEarly = false)
     {
-        return TryParse(versionSpan, out var version, out annotations, options, failEarly)
+        return TryParse(versionSpan, out var version, out annotations, style, failEarly)
             ? version
             : throw new MalformedDpkgVersionException(versionSpan.ToString(), annotations);
     }
@@ -159,270 +159,264 @@ public partial class DpkgVersion :
     public static bool TryParse(
         ReadOnlySpan<char> versionSpan,
         [NotNullWhen(returnValue: true)] out DpkgVersion? version,
-        DpkgVersionOptions options = DpkgVersionOptions.Default)
+        DpkgVersionStyle style = DpkgVersionStyle.Default)
     {
         // It does not make sense to failEarly: false, because the annotations always get discarded.
-        return TryParse(versionSpan, out version, out _, options, failEarly: true);
+        return TryParse(versionSpan, out version, out _, style, failEarly: true);
     }
 
     public static bool TryParse(
         ReadOnlySpan<char> versionSpan,
         [NotNullWhen(returnValue: true)] out DpkgVersion? version,
         out ImmutableList<ParsingAnnotation> annotations,
-        DpkgVersionOptions options = DpkgVersionOptions.Default,
+        DpkgVersionStyle style = DpkgVersionStyle.Default,
         bool failEarly = false)
     {
-        annotations = ImmutableList<ParsingAnnotation>.Empty;
+        if (!BaseTryParseCore(
+                versionSpan,
+                out var epochSpan,
+                out var epochValue,
+                out _,
+                out var upstreamVersionSpan,
+                out var realUpstreamVersionSpanOffset,
+                out var revertedUpstreamVersionSpan,
+                out var realUpstreamVersionSpan,
+                out var revisionSpanOffset,
+                out var revisionSpan,
+                out var ubuntuRevisionSpanOffset,
+                out var debianRevisionSpan,
+                out var ubuntuRevisionSpan,
+                out annotations,
+                style,
+                failEarly))
+        {
+            version = null;
+            return false;
+        }
 
-        bool isValid;
+        version = new DpkgVersion(
+            originalString: versionSpan.ToString(),
+            epoch: epochSpan.Length > 0 ? epochSpan.ToString() : null,
+            epochValue: epochValue,
+            upstreamVersion: upstreamVersionSpan.ToString(),
+            revertedUpstreamVersion: realUpstreamVersionSpanOffset > 0 ? revertedUpstreamVersionSpan.ToString() : null,
+            realUpstreamVersion: realUpstreamVersionSpanOffset > 0 ? realUpstreamVersionSpan.ToString() : null,
+            revision: revisionSpanOffset >= 0 ? revisionSpan.ToString() : null,
+            debianRevision: revisionSpanOffset >= 0 ? debianRevisionSpan.ToString() : null,
+            ubuntuRevision: ubuntuRevisionSpanOffset >= 0 ? ubuntuRevisionSpan.ToString() : null);
+        return true;
+    }
+
+    protected static bool BaseTryParseCore(
+        ReadOnlySpan<char> versionSpan,
+        out ReadOnlySpan<char> epochSpan,
+        out uint epochValue,
+        out int upstreamVersionSpanOffset,
+        out ReadOnlySpan<char> upstreamVersionSpan,
+        out int realUpstreamVersionSpanOffset,
+        out ReadOnlySpan<char> revertedUpstreamVersionSpan,
+        out ReadOnlySpan<char> realUpstreamVersionSpan,
+        out int revisionSpanOffset,
+        out ReadOnlySpan<char> revisionSpan,
+        out int ubuntuRevisionSpanOffset,
+        out ReadOnlySpan<char> debianRevisionSpan,
+        out ReadOnlySpan<char> ubuntuRevisionSpan,
+        out ImmutableList<ParsingAnnotation> annotations,
+        DpkgVersionStyle style,
+        bool failEarly)
+    {
+        var isValid = true;
+        annotations = ImmutableList<ParsingAnnotation>.Empty;
 
         if (versionSpan.Length == 0)
         {
-            isValid = (options & DpkgVersionOptions.EmptyVersion) > 0;
+            isValid = (style & DpkgVersionStyle.AllowEmpty) > 0;
 
-            if (isValid)
+            if (!isValid && failEarly) goto returnEmpty;
+            annotations = [ParsingAnnotation.Create(EmptyVersion)];
+            goto returnEmpty;
+        }
+
+        // re-use list objects if we create one
+        var errorBuffers = new ErrorBuffers();
+
+        #region Parse Epoch
+        {
+            var epochDelimiterIndex = versionSpan.IndexOf(EPOCH_DELIMITER);
+            upstreamVersionSpanOffset = epochDelimiterIndex + 1;
+            epochSpan = ReadOnlySpan<char>.Empty;
+            epochValue = DEFAULT_EPOCH_VALUE;
+
+            if (epochDelimiterIndex == 0)
             {
-                version = Empty;
+                isValid = false;
+                if (failEarly) goto returnEmpty;
+                annotations += ParsingAnnotation.Create(EmptyEpoch, location: epochDelimiterIndex);
+            }
+            else if (epochDelimiterIndex > 0)
+            {
+                epochSpan = versionSpan[..epochDelimiterIndex];
+                var epochValueTooLarge = false;
+
+                ulong value = 0ul;
+                for (var position = 0; position < epochDelimiterIndex; ++position)
+                {
+                    char currentCharacter = versionSpan[position];
+
+                    if (char.IsAsciiDigit(currentCharacter))
+                    {
+                        // I think it is computationally cheaper to always calculate this than
+                        // checking every time if it even makes sense to do:
+                        value = unchecked(value * 10ul + (ulong)(currentCharacter - '0'));
+                        if (value > MAX_EPOCH_VALUE)
+                        {
+                            isValid = false;
+                            if (failEarly) goto returnEmpty;
+                            epochValueTooLarge = true;
+                        }
+                    }
+                    else
+                    {
+                        isValid = false;
+                        if (failEarly) goto returnEmpty;
+                        errorBuffers.AddInvalidCharacter(currentCharacter, position);
+                    }
+                }
+
+                if (errorBuffers.InvalidCharacters is { Count: > 0 })
+                {
+                    annotations += ParsingAnnotation.Create(InvalidEpochCharacters,
+                        locations: errorBuffers.Locations!.ToImmutable(),
+                        messageArgs: [epochSpan.ToString(), errorBuffers.InvalidCharacters.JoinAsCharacterLiteralList()]);
+                    errorBuffers.Clear();
+                }
+                else if (epochValueTooLarge)
+                {
+                    annotations += ParsingAnnotation.Create(EpochValueTooLarge,
+                        locations: [epochSpan.ToLocation()],
+                        messageArgs: epochSpan.ToString());
+                }
+                else
+                {
+                    epochValue = (uint)value;
+                }
+            }
+        }
+        #endregion
+
+        #region Parse Upstream Version & Revision
+        if (upstreamVersionSpanOffset >= versionSpan.Length)
+        {
+            isValid = false;
+            if (failEarly) goto returnEmpty;
+            annotations += ParsingAnnotation.Create(EmptyUpstreamVersion);
+            goto returnEmpty;
+        }
+
+        {
+            var revisionDelimiterIndex = versionSpan.LastIndexOf(REVISION_DELIMITER);
+
+            if (revisionDelimiterIndex == -1 || revisionDelimiterIndex < upstreamVersionSpanOffset)
+            {
+                revisionSpanOffset = -1;
+                revisionSpan = ReadOnlySpan<char>.Empty;
+                upstreamVersionSpan = versionSpan[upstreamVersionSpanOffset..];
             }
             else
             {
-                if (failEarly) goto fail;
-                version = null;
+                upstreamVersionSpan = versionSpan[upstreamVersionSpanOffset..revisionDelimiterIndex];
+                revisionSpanOffset = revisionDelimiterIndex + 1;
+                revisionSpan = versionSpan[revisionSpanOffset..];
             }
 
-            annotations += ParsingAnnotation.Create(EmptyVersion);
-            return isValid;
+            isValid &= AllCharactersAreValid(
+                span: upstreamVersionSpan,
+                spanOffset: upstreamVersionSpanOffset,
+                isAllowedCharacter: IsAllowedUpstreamVersionCharacter,
+                emptyDescriptor: EmptyUpstreamVersion,
+                invalidCharacterDescriptor: InvalidUpstreamVersionCharacters,
+                failEarly,
+                ref annotations,
+                ref errorBuffers);
+
+            if (!isValid && failEarly) goto returnEmpty;
+
+            if (revisionSpanOffset >= 0)
+            {
+                isValid &= AllCharactersAreValid(
+                    span: revisionSpan,
+                    spanOffset: revisionSpanOffset,
+                    isAllowedCharacter: IsAllowedRevisionCharacter,
+                    emptyDescriptor: EmptyRevision,
+                    invalidCharacterDescriptor: InvalidRevisionCharacters,
+                    failEarly,
+                    ref annotations,
+                    ref errorBuffers);
+
+                if (!isValid && failEarly) goto returnEmpty;
+            }
         }
-
-        isValid = TryParseEpoch(
-            versionSpan,
-            out var epochSpan,
-            out var epochValue,
-            out var upstreamVersionOffset,
-            ref annotations,
-            failEarly);
-
-        if (!isValid && failEarly) goto fail;
-
-        if (upstreamVersionOffset >= versionSpan.Length)
-        {
-            if (failEarly) goto fail;
-            annotations += ParsingAnnotation.Create(EmptyUpstreamVersion);
-            goto fail;
-        }
-
-        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
-        isValid &= TryParseUpstreamVersionAndRevision(
-            versionSpan,
-            upstreamVersionOffset,
-            out var upstreamVersionSpan,
-            out var revisionOffset,
-            out var revisionSpan,
-            ref annotations,
-            ref invalidCharacterLocations,
-            failEarly);
-
-        if (!isValid && failEarly) goto fail;
+        #endregion
 
         isValid &= TrySplitByDelimiter(
             span: upstreamVersionSpan,
-            spanStartOffset: upstreamVersionOffset,
+            spanOffset: upstreamVersionSpanOffset,
             delimiter: REAL_UPSTREAM_VERSION_DELIMITER,
-            allowMultipleDelimiter: (options & DpkgVersionOptions.MultipleRealUpstreamVersionDelimiter) > 0,
-            allowEmptyFirstPart: (options & DpkgVersionOptions.EmptyRevertedUpstreamVersion) > 0,
-            allowEmptySecondPart: (options & DpkgVersionOptions.EmptyRealUpstreamVersion) > 0,
+            allowMultipleDelimiter: (style & DpkgVersionStyle.AllowMultipleRealUpstreamVersionDelimiter) != 0,
+            allowEmptyFirstPart: (style & DpkgVersionStyle.AllowEmptyRevertedUpstreamVersion) != 0,
+            allowEmptySecondPart: (style & DpkgVersionStyle.AllowEmptyRealUpstreamVersion) != 0,
             emptySpanDescriptor: EmptyUpstreamVersion,
             emptyFirstPartDescriptor: EmptyRevertedUpstreamVersion,
             emptySecondPartDescriptor: EmptyRealUpstreamVersion,
             multipleDelimiterDescriptor: MultipleRealUpstreamVersionDelimiter,
+            out realUpstreamVersionSpanOffset,
+            out revertedUpstreamVersionSpan,
+            out realUpstreamVersionSpan,
+            failEarly,
             ref annotations,
-            out var containsRealUpstreamVersionDelimiter,
-            out var revertedUpstreamVersionSpan,
-            out var realUpstreamVersionSpan,
-            ref invalidCharacterLocations,
-            failEarly);
+            ref errorBuffers.Locations);
 
-        if (!isValid && failEarly) goto fail;
+        if (!isValid && failEarly) goto returnEmpty;
 
         isValid &= TrySplitByDelimiter(
             span: revisionSpan,
-            spanStartOffset: revisionOffset,
+            spanOffset: revisionSpanOffset,
             delimiter: UBUNTU_REVISION_DELIMITER,
-            allowMultipleDelimiter: (options & DpkgVersionOptions.MultipleUbuntuRevisionDelimiters) > 0,
-            allowEmptyFirstPart: (options & DpkgVersionOptions.EmptyDebianRevision) > 0,
-            allowEmptySecondPart: (options & DpkgVersionOptions.EmptyUbuntuRevision) > 0,
+            allowMultipleDelimiter: (style & DpkgVersionStyle.AllowMultipleUbuntuRevisionDelimiters) != 0,
+            allowEmptyFirstPart: (style & DpkgVersionStyle.AllowEmptyDebianRevision) != 0,
+            allowEmptySecondPart: (style & DpkgVersionStyle.AllowEmptyUbuntuRevision) != 0,
             emptySpanDescriptor: EmptyRevision,
             emptyFirstPartDescriptor: EmptyDebianRevision,
             emptySecondPartDescriptor: EmptyUbuntuRevision,
             multipleDelimiterDescriptor: MultipleUbuntuRevisionDelimiter,
-            ref annotations,
-            out var containsUbuntuRevisionDelimiter,
-            out var debianRevisionSpan,
-            out var ubuntuRevisionSpan,
-            ref invalidCharacterLocations,
-            failEarly);
-
-        if (isValid)
-        {
-            version = new DpkgVersion(
-                originalString: versionSpan.ToString(),
-                epoch: epochSpan.Length > 0 ? epochSpan.ToString() : null,
-                epochValue: epochValue,
-                upstreamVersion: upstreamVersionSpan.ToString(),
-                revertedUpstreamVersion: containsRealUpstreamVersionDelimiter ? revertedUpstreamVersionSpan.ToString() : null,
-                realUpstreamVersion: containsRealUpstreamVersionDelimiter ? realUpstreamVersionSpan.ToString() : null,
-                revision: revisionOffset >= 0 ? revisionSpan.ToString() : null,
-                debianRevision: revisionOffset >= 0 ? debianRevisionSpan.ToString() : null,
-                ubuntuRevision: containsUbuntuRevisionDelimiter ? ubuntuRevisionSpan.ToString() : null);
-            return true;
-        }
-        fail:
-        version = null;
-        return false;
-    }
-
-    private static bool TryParseEpoch(
-        ReadOnlySpan<char> versionSpan,
-        out ReadOnlySpan<char> epochSpan,
-        out uint epochValue,
-        out int upstreamVersionOffset,
-        ref ImmutableList<ParsingAnnotation> annotations,
-        bool failEarly)
-    {
-        epochValue = DEFAULT_EPOCH_VALUE;
-        var epochDelimiterIndex = versionSpan.IndexOf(EPOCH_DELIMITER);
-        upstreamVersionOffset = epochDelimiterIndex + 1;
-
-        if (epochDelimiterIndex == -1)
-        {
-            epochSpan = ReadOnlySpan<char>.Empty;
-            return true;
-        }
-        if (epochDelimiterIndex == 0)
-        {
-            epochSpan = ReadOnlySpan<char>.Empty;
-            if (failEarly) return false;
-
-            annotations += ParsingAnnotation.Create(EmptyEpoch);
-            return false;
-        }
-
-        epochSpan = versionSpan[..epochDelimiterIndex];
-        var epochValueTooLarge = false;
-
-        List<char>? invalidCharacters = null;
-        ImmutableList<Location>.Builder? invalidCharacterLocations = null;
-        ulong value = 0ul;
-        for (var position = 0; position < epochDelimiterIndex; ++position)
-        {
-            char currentCharacter = versionSpan[position];
-
-            if (char.IsAsciiDigit(currentCharacter))
-            {
-                // I think it is computational cheaper to always calculate this than
-                // checking every time if it even makes sense to do:
-                value = unchecked(value * 10ul + (ulong)(currentCharacter - '0'));
-                if (value > MAX_EPOCH_VALUE)
-                {
-                    if (failEarly) return false;
-                    epochValueTooLarge = true;
-                }
-            }
-            else
-            {
-                if (failEarly) return false;
-
-                if (invalidCharacters is null)
-                {
-                    invalidCharacters = [currentCharacter];
-                    invalidCharacterLocations = ImmutableList.CreateBuilder<Location>();
-                }
-                else if (!invalidCharacters.Contains(currentCharacter))
-                {
-                    invalidCharacters.Add(currentCharacter);
-                }
-                invalidCharacterLocations!.Add(position);
-            }
-        }
-
-        if (invalidCharacters is not null)
-        {
-            annotations += ParsingAnnotation.Create(InvalidEpochCharacters,
-                locations: invalidCharacterLocations!.ToImmutable(),
-                messageArgs: [epochSpan.ToString(), invalidCharacters.JoinAsCharacterLiteralList()]);
-        }
-        else if (epochValueTooLarge)
-        {
-            annotations += ParsingAnnotation.Create(EpochValueTooLarge,
-                locations: [ epochSpan.ToLocation() ],
-                messageArgs: epochSpan.ToString());
-        }
-        else
-        {
-            epochValue = (uint)value;
-        }
-
-        return annotations.Count == 0;
-    }
-
-    private static bool TryParseUpstreamVersionAndRevision(
-        ReadOnlySpan<char> versionSpan,
-        int upstreamVersionOffset,
-        out ReadOnlySpan<char> upstreamVersionSpan,
-        out int revisionOffset,
-        out ReadOnlySpan<char> revisionSpan,
-        ref ImmutableList<ParsingAnnotation> annotations,
-        ref ImmutableList<Location>.Builder? invalidCharacterLocations,
-        bool failEarly)
-    {
-        var revisionDelimiterIndex = versionSpan.LastIndexOf(REVISION_DELIMITER);
-        List<char>? invalidCharacters = null;
-
-        if (revisionDelimiterIndex == -1)
-        {
-            revisionOffset = -1;
-            revisionSpan = ReadOnlySpan<char>.Empty;
-            upstreamVersionSpan = versionSpan[upstreamVersionOffset..];
-        }
-        else
-        {
-            upstreamVersionSpan = versionSpan[upstreamVersionOffset..revisionDelimiterIndex];
-            revisionOffset = revisionDelimiterIndex + 1;
-            revisionSpan = versionSpan[revisionOffset..];
-        }
-
-        bool isValid = AllCharactersAreValid(
-            span: upstreamVersionSpan,
-            spanStartOffset: upstreamVersionOffset,
-            isAllowedCharacter: IsAllowedUpstreamVersionCharacter,
-            emptyDescriptor: EmptyUpstreamVersion,
-            invalidCharacterDescriptor: InvalidUpstreamVersionCharacters,
+            out ubuntuRevisionSpanOffset,
+            out debianRevisionSpan,
+            out ubuntuRevisionSpan,
             failEarly,
-            annotations: ref annotations,
-            invalidCharacters: ref invalidCharacters,
-            invalidCharacterLocations: ref invalidCharacterLocations);
+            ref annotations,
+            ref errorBuffers.Locations);
 
-        if (revisionDelimiterIndex >= 0)
-        {
-            if (!isValid && failEarly) return false;
-            isValid &= AllCharactersAreValid(
-                span: revisionSpan,
-                spanStartOffset: revisionOffset,
-                isAllowedCharacter: IsAllowedRevisionCharacter,
-                emptyDescriptor: EmptyRevision,
-                invalidCharacterDescriptor: InvalidRevisionCharacters,
-                failEarly,
-                annotations: ref annotations,
-                invalidCharacters: ref invalidCharacters,
-                invalidCharacterLocations: ref invalidCharacterLocations);
-        }
+        if (isValid) return true;
 
+    returnEmpty:
+        epochSpan = ReadOnlySpan<char>.Empty;
+        epochValue = DEFAULT_EPOCH_VALUE;
+        upstreamVersionSpanOffset = -1;
+        upstreamVersionSpan = ReadOnlySpan<char>.Empty;
+        realUpstreamVersionSpanOffset = -1;
+        revertedUpstreamVersionSpan = ReadOnlySpan<char>.Empty;
+        realUpstreamVersionSpan = ReadOnlySpan<char>.Empty;
+        revisionSpanOffset = -1;
+        revisionSpan = ReadOnlySpan<char>.Empty;
+        ubuntuRevisionSpanOffset = -1;
+        debianRevisionSpan = ReadOnlySpan<char>.Empty;
+        ubuntuRevisionSpan = ReadOnlySpan<char>.Empty;
         return isValid;
     }
 
     private static bool TrySplitByDelimiter(
         ReadOnlySpan<char> span,
-        int spanStartOffset,
+        int spanOffset,
         string delimiter,
         bool allowMultipleDelimiter,
         bool allowEmptyFirstPart,
@@ -431,41 +425,40 @@ public partial class DpkgVersion :
         ParsingAnnotationDescriptor emptyFirstPartDescriptor,
         ParsingAnnotationDescriptor emptySecondPartDescriptor,
         ParsingAnnotationDescriptor multipleDelimiterDescriptor,
-        ref ImmutableList<ParsingAnnotation> annotations,
-        out bool containsDelimiter,
+        out int secondPartSpanOffset,
         out ReadOnlySpan<char> firstPartSpan,
         out ReadOnlySpan<char> secondPartSpan,
-        ref ImmutableList<Location>.Builder? locations,
-        bool failEarly)
+        bool failEarly,
+        scoped ref ImmutableList<ParsingAnnotation> annotations,
+        scoped ref ImmutableList<Location>.Builder? locations)
     {
         if (span.IsEmpty)
         {
-            firstPartSpan = span;
+            secondPartSpanOffset = -1;
+            firstPartSpan = ReadOnlySpan<char>.Empty;
             secondPartSpan = ReadOnlySpan<char>.Empty;
-            containsDelimiter = false;
 
-            if (spanStartOffset < 0) return true;
+            if (spanOffset < 0) return true;
 
             if (failEarly) return false;
-            annotations += ParsingAnnotation.Create(emptySpanDescriptor,
-                location: spanStartOffset);
+            annotations += ParsingAnnotation.Create(emptySpanDescriptor, location: spanOffset);
             return false;
         }
 
-        var ubuntuRevisionDelimiterIndex = span.IndexOf(delimiter);
-        if (ubuntuRevisionDelimiterIndex < 0)
+        var delimiterIndex = span.IndexOf(delimiter);
+        if (delimiterIndex < 0)
         {
+            secondPartSpanOffset = -1;
             firstPartSpan = span;
             secondPartSpan = ReadOnlySpan<char>.Empty;
-            containsDelimiter = false;
             return true;
         }
 
+        secondPartSpanOffset = delimiterIndex + delimiter.Length;
+        firstPartSpan = span[..delimiterIndex];
+        secondPartSpan = span[secondPartSpanOffset..];
+
         bool isValid = true;
-        var secondPartOffset = ubuntuRevisionDelimiterIndex + delimiter.Length;
-        firstPartSpan = span[..ubuntuRevisionDelimiterIndex];
-        secondPartSpan = span[secondPartOffset..];
-        containsDelimiter = true;
 
         if (firstPartSpan.IsEmpty)
         {
@@ -476,7 +469,7 @@ public partial class DpkgVersion :
             }
 
             annotations += ParsingAnnotation.Create(emptyFirstPartDescriptor,
-                location: spanStartOffset,
+                location: spanOffset,
                 messageArgs: [ span.ToString() ]);
         }
 
@@ -489,10 +482,8 @@ public partial class DpkgVersion :
             }
 
             annotations += ParsingAnnotation.Create(emptySecondPartDescriptor,
-                location: secondPartOffset + spanStartOffset,
+                location: secondPartSpanOffset + spanOffset,
                 messageArgs: [ span.ToString() ]);
-
-            return isValid;
         }
 
         if (secondPartSpan.Length < delimiter.Length) return isValid;
@@ -504,8 +495,8 @@ public partial class DpkgVersion :
                 if (++delimiterPosition < delimiter.Length) continue;
                 if (failEarly && !allowMultipleDelimiter) return false;
 
+                var end = secondPartSpanOffset + position + 1;
                 locations ??= ImmutableList.CreateBuilder<Location>();
-                var end = secondPartOffset + position + 1;
                 locations.Add(new Location(start: end - delimiter.Length, end));
             }
 
@@ -514,11 +505,12 @@ public partial class DpkgVersion :
 
         if (locations is { Count: > 0 })
         {
-            locations.Insert(0, new Location(start: secondPartOffset - delimiter.Length, end: secondPartOffset));
+            locations.Insert(0, new Location(start: secondPartSpanOffset - delimiter.Length, end: secondPartSpanOffset));
             annotations += ParsingAnnotation.Create(multipleDelimiterDescriptor,
-                locations: locations.ToImmutableList(),
+                locations: locations.ToImmutable(),
                 messageArgs: [ secondPartSpan.ToString() ]);
             locations.Clear();
+
             return allowMultipleDelimiter && isValid;
         }
 
@@ -526,21 +518,19 @@ public partial class DpkgVersion :
     }
 
     private static bool AllCharactersAreValid(
-        ReadOnlySpan<char> span,
-        int spanStartOffset,
+        scoped ReadOnlySpan<char> span,
+        int spanOffset,
         Func<char, bool> isAllowedCharacter,
         ParsingAnnotationDescriptor emptyDescriptor,
         ParsingAnnotationDescriptor invalidCharacterDescriptor,
         bool failEarly,
-        ref ImmutableList<ParsingAnnotation> annotations,
-        ref List<char>? invalidCharacters,
-        ref ImmutableList<Location>.Builder? invalidCharacterLocations)
+        scoped ref ImmutableList<ParsingAnnotation> annotations,
+        scoped ref ErrorBuffers errorBuffers)
     {
         if (span.IsEmpty)
         {
             if (failEarly) return false;
-            annotations += ParsingAnnotation.Create(emptyDescriptor,
-                location: spanStartOffset);
+            annotations += ParsingAnnotation.Create(emptyDescriptor, location: spanOffset);
             return false;
         }
 
@@ -551,27 +541,16 @@ public partial class DpkgVersion :
             if (!isAllowedCharacter(currentCharacter))
             {
                 if (failEarly) return false;
-
-                if (invalidCharacters is null)
-                {
-                    invalidCharacters = [currentCharacter];
-                    invalidCharacterLocations ??= ImmutableList.CreateBuilder<Location>();
-                }
-                else if (!invalidCharacters.Contains(currentCharacter))
-                {
-                    invalidCharacters.Add(currentCharacter);
-                }
-                invalidCharacterLocations!.Add(new Location(position + spanStartOffset));
+                errorBuffers.AddInvalidCharacter(currentCharacter, position + spanOffset);
             }
         }
 
-        if (invalidCharacters is { Count: > 0 })
+        if (errorBuffers.InvalidCharacters is { Count: > 0 })
         {
             annotations += ParsingAnnotation.Create(invalidCharacterDescriptor,
-                locations: invalidCharacterLocations!.ToImmutable(),
-                messageArgs: [span.ToString(), invalidCharacters.JoinAsCharacterLiteralList()]);
-            invalidCharacters.Clear();
-            invalidCharacterLocations.Clear();
+                locations: errorBuffers.Locations!.ToImmutable(),
+                messageArgs: [span.ToString(), errorBuffers.InvalidCharacters.JoinAsCharacterLiteralList()]);
+            errorBuffers.Clear();
             return false;
         }
 
@@ -584,4 +563,38 @@ public partial class DpkgVersion :
 
     private static bool IsAllowedRevisionCharacter(char character)
         => char.IsAsciiLetterOrDigit(character) || character == '+' || character == '.' || character == '~';
+
+
+    private ref struct ErrorBuffers
+    {
+        public List<char>? InvalidCharacters;
+        public ImmutableList<Location>.Builder? Locations;
+
+        public ErrorBuffers()
+        {
+            InvalidCharacters = null;
+            Locations = null;
+        }
+
+        public void AddInvalidCharacter(char character, Location location)
+        {
+            if (InvalidCharacters is null)
+            {
+                InvalidCharacters = [character];
+            }
+            else if (!InvalidCharacters.Contains(character))
+            {
+                InvalidCharacters.Add(character);
+            }
+
+            Locations ??= ImmutableList.CreateBuilder<Location>();
+            Locations.Add(location);
+        }
+
+        public void Clear()
+        {
+            InvalidCharacters!.Clear();
+            Locations!.Clear();
+        }
+    }
 }
