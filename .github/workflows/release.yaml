@@ -1,0 +1,38 @@
+name: release nuget packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build all & run tests
+    runs-on: ubuntu-26.04
+    permissions:
+      id-token: write
+    steps:
+      - name: checkout source
+        uses: actions/checkout@v6
+      - name: install dotnet
+        run: sudo apt-get install --assume-yes --update dotnet10
+      - name: dotnet build
+        run: dotnet build
+      - name: dotnet test
+        run: dotnet test
+      - name: dotnet pack
+        run: dotnet pack
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - name: NuGet push
+        run: |
+          dotnet nuget push \
+            src/Common/bin/Release/Canonical.Common.*.nupkg \
+            src/Dpkg.Common/bin/Release/Canonical.Dpkg.Common.*.nupkg \
+            src/Apt.Common/bin/Release/Canonical.Apt.Common.*.nupkg\
+            src/DistroInfo/bin/Release/Canonical.DistroInfo.*.nupkg\
+            src/DistroInfo.Static/bin/Release/Canonical.DistroInfo.Static.*.nupkg\
+            src/Madison/bin/Release/Canonical.Madison.*.nupkg \
+            --api-key ${{steps.login.outputs.NUGET_API_KEY}} \
+            --source https://api.nuget.org/v3/index.json
