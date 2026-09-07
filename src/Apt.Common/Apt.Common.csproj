@@ -28,8 +28,8 @@ program.  If not, see http://www.gnu.org/licenses/.
   </PropertyGroup>
 
   <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="\"/>
-    </ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Common.SourceGenerator/Common.SourceGeneration.csproj"

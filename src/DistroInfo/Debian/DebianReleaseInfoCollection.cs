@@ -22,7 +22,7 @@ namespace Canonical.DistroInfo.Debian;
 public sealed class DebianReleaseInfoCollection : DistroReleaseInfoCollection<DebianReleaseInfo>
 {
     public static async Task<DebianReleaseInfoCollection> ReadFromDistroInfoDataAsync(
-        string path = "/usr/share/distro-info/ubuntu.csv",
+        string path = "/usr/share/distro-info/debian.csv",
         CancellationToken cancellationToken = default)
     {
         var releases = await DistroInfo

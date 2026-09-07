@@ -20,11 +20,14 @@ program.  If not, see http://www.gnu.org/licenses/.
     <Company>Canonical Ltd.</Company>
     <Copyright>Copyright 2026 Canonical Ltd.</Copyright>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
-    <Version>1.0.0-preview.1.20260907.2</Version>
+    <Version>1.0.0-preview.1.20260907.3</Version>
 
     <PackageProjectUrl>https://github.com/canonical/nuget-packages</PackageProjectUrl>
     <RepositoryUrl>https://github.com/canonical/nuget-packages</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
